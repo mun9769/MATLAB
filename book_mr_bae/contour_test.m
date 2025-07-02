@@ -1,22 +1,26 @@
 % todo: 정격전류의 1.8배에 대해서 최대 범위 정하기.
 % todo: MTPA 곡선 그리기
 
-
+clear
 close all;
 syms ids iqs Te P phi Lds Lqs
 
 P = 8;
+Lds = 0.243e-3;
+Lqs = 0.298e-3;
+phi = 0.04366;
+
 eqn = Te == 3/2*P * (ids*iqs*(Lds - Lqs) + phi*iqs);
 
-eqn_subs = subs(eqn, [phi,   Lds   Lqs], ...
-                      [1, 30e-3 40e-3]);
-
+% eqn_subs = subs(eqn, [phi   Lds   Lqs], ...
+                      % [1 30e-3 40e-3]);
+eqn_subs = eqn
 
 Te_func = matlabFunction(rhs(eqn_subs), 'Vars', [ids, iqs]);
 
 % 축 범위 설정 및 그리드 생성
-ids_range = linspace(-100, 50, 100); 
-iqs_range = linspace(-75, 75, 100);  
+ids_range = linspace(-400, 400, 100); 
+iqs_range = linspace(-400, 400, 100);  
 % ids_range = linspace(-20, 0, 100); 
 % iqs_range = linspace(0, 20, 100);  
 [IDS, IQS] = meshgrid(ids_range, iqs_range);
