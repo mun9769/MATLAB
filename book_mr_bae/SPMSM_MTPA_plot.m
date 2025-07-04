@@ -14,35 +14,34 @@ end
 % IPMSM matlab example parameter
 Vsmax = 20 / sqrt(3);
 P = 8;
-Lds = 0.243e-3;
+Lds = 0.298e-3;
 Lqs = 0.298e-3;
 Lamf = 0.04366;
 
 % fve40 example parameter
 P = 24;
 Lds = 30e-3;
-Lqs = 40e-3;
-Lamf = 0.12; % [Wb]
+Lqs = 30e-3;
+Lamf = 0.32; % [Wb] % 이거만 0.2 키움
 Vsmax = 400;
 Ismax = 10; % Arms
 % wrpm_rated = 400; % rpm
 
 % 전압 제한원
-w_eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2;
+eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2;
 wrpm_val = [1000 1200 1400 1600 1800];
 wr_val = wrpm_val*(2*pi/60) * (P/2);  
-w_eqn1=subs(w_eqn, w, wr_val(3));
-w_eqn2=subs(w_eqn, w, wr_val(4));
-w_eqn3=subs(w_eqn, w, wr_val(5));
-w_solution = solve(w_eqn, w);
-w_solution = w_solution(2) % 임시방편.
+w_eqn1=subs(eqn, w, wr_val(3));
+w_eqn2=subs(eqn, w, wr_val(4));
+w_eqn3=subs(eqn, w, wr_val(5));
+w_solution = solve(eqn, w);
 
 % 전류 제한원
-Te_eqn = Te == 3/2*P * (ids*iqs*(Lds - Lqs) + Lamf*iqs);
-Te_eqn1 = subs(Te_eqn, Te, 10);
-Te_eqn2 = subs(Te_eqn, Te, 20);
-Te_eqn3 = subs(Te_eqn, Te, 30);
-Te_eqn4 = subs(Te_eqn, Te, 40);
+eqn = Te == 3/2*P * (ids*iqs*(Lds - Lqs) + Lamf*iqs);
+Te_eqn1 = subs(eqn, Te, 10);
+Te_eqn2 = subs(eqn, Te, 20);
+Te_eqn3 = subs(eqn, Te, 30);
+Te_eqn4 = subs(eqn, Te, 40);
 % Lagrange 승수법을 사용해서 곡선과 원점 사이의 최단거리를 구한다.
 [~, ~, dist_1] = my_Lagrange_multiplier(eDiff(Te_eqn1), ids, iqs);
 [~, ~, dist_2] = my_Lagrange_multiplier(eDiff(Te_eqn2), ids, iqs);
@@ -50,33 +49,8 @@ Te_eqn4 = subs(Te_eqn, Te, 40);
 [ids_mn, iqs_mn, dist_4] = my_Lagrange_multiplier(eDiff(Te_eqn4), ids, iqs);
 circle_eqn1 = ids^2+iqs^2 == dist_4^2;
 
-mm=fimplicit(ids^2+iqs^2==dist_4^2); % 왜 mm.XData는 1x0임?
-drawnow;
-a=my_nearest_index(mm, ids_mn, iqs_mn);
-b=my_nearest_index(mm, sol_ids, sol_iqs);
-if a > b
-    [a, b] = deal(b, a);
-end
-plot(f4di.XData(a:b), f4di.YData(a:b), 'r')
-xxx=[]
-ppp=[]
-for i=a:b
-    x = f4di.XData(i);
-    y = f4di.YData(i);
-    wr = subs(w_solution, [ids iqs], [x y]);
-    T = subs(rhs(Te_eqn), [ids iqs], [x y]);
-    wr = double(wr);
-    T = double(T);
-    xxx(end+1) = T;
-    pp = wr / (P/2) * T;
-    ppp(end+1) = pp;
-end
 
-figure
-plot(xxx, ppp, 'k');
-%%
-
-% 전압제한원과 전류제한원의 교점 구하기.
+% 전압제한원과 전류제한원의 교점 구하기. -> none
 [sol_ids, sol_iqs] = solve([w_eqn3 circle_eqn1], [ids iqs]);
 sol_ids = double(sol_ids);
 sol_iqs = double(sol_iqs);
@@ -86,10 +60,9 @@ a = [sol_ids sol_iqs];
 b = [ids_mn iqs_mn];
 
 
-
 if ~exist('MTPA_position', 'var')
     for te=1:40
-        Te_eqn = subs(Te_eqn, Te, te);
+        eqn = subs(eqn, Te, te);
         [x_mn, y_mn, dist] = my_Lagrange_multiplier(eDiff(eqn), ids, iqs);
         MTPA_position(te,:) = [x_mn y_mn];
         
@@ -106,17 +79,11 @@ xlabel("T_e [Nm]"); ylabel("P_{out} [W]")
 title("MTPA power");
 
 figure; hold on;
-plot(sol_ids, sol_iqs, 'ro');
-f1=fimplicit(w_eqn1, 'k--');
-f2=fimplicit(w_eqn2, 'k--');
 f3=fimplicit(w_eqn3, 'k--');
 f4=plot(-Lamf/Lds, 0, 'ro', displayname='전압제한타원 원점');
 drawnow;
 
-text(f1.XData(1), f1.YData(1),'w_{1}', 'backgroundColor', 'white', fontsize=12);
-text(f2.XData(1), f2.YData(1),'w_{2}', 'backgroundColor', 'white', fontsize=12);
-text(f3.XData(1), f3.YData(1),'w_{3}', 'backgroundColor', 'white', fontsize=12);
-
+text(f3.XData(1), f3.YData(1),'w_{base}', 'backgroundColor', 'white', fontsize=12);
 
 xlabel('d-axis'); ylabel('q-axis')
 axis([-Ismax 2 -6 6]*1.5)
@@ -126,22 +93,14 @@ plot([-Ismax Ismax]*1.5, [0 0], 'k', 'LineWidth', 0.2);
 
  
 % figure; hold on;
-f1te=fimplicit(Te_eqn1, color='k');
-f2te=fimplicit(Te_eqn2, color='k');
-f3te=fimplicit(Te_eqn3, color='k');
 f4te=fimplicit(Te_eqn4, color='k');
 
-f2di=fimplicit(ids^2+iqs^2==dist_2^2, color='k');
-f3di=fimplicit(ids^2+iqs^2==dist_3^2, color='k');
 f4di=fimplicit(ids^2+iqs^2==dist_4^2, color='k');
 
 f1MTPA=plot(MTPA_position(:,1), MTPA_position(:,2), linewidth=2, color='b');
 drawnow;
 
-text(f1te.XData(end-3), f1te.YData(end-3),'Te=10Nm', 'backgroundColor', 'white', fontsize=12);
-text(f2te.XData(end-6), f2te.YData(end-6),'Te=20Nm', 'backgroundColor', 'white', fontsize=12);
-text(f3te.XData(end-9), f3te.YData(end-9),'Te=30Nm', 'backgroundColor', 'white', fontsize=12);
-text(f4te.XData(end-15),f4te.YData(end-15),'Te=40Nm', 'backgroundColor', 'white', fontsize=12);
+% text(f4te.XData(end-15),f4te.YData(end-15),'Te=40Nm', 'backgroundColor', 'white', fontsize=12);
 text(MTPA_position(end,1), MTPA_position(end,2), 'MTPA: ~40Nm', ...
     backgroundcolor='white', ...
     fontsize=12, color='b');
