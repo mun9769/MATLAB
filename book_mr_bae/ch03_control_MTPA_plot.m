@@ -50,31 +50,33 @@ Te_eqn4 = subs(Te_eqn, Te, 40);
 [ids_mn, iqs_mn, dist_4] = my_Lagrange_multiplier(eDiff(Te_eqn4), ids, iqs);
 circle_eqn1 = ids^2+iqs^2 == dist_4^2;
 
-mm=fimplicit(ids^2+iqs^2==dist_4^2); % 왜 mm.XData는 1x0임?
-drawnow;
-a=my_nearest_index(mm, ids_mn, iqs_mn);
-b=my_nearest_index(mm, sol_ids, sol_iqs);
-if a > b
-    [a, b] = deal(b, a);
-end
-plot(f4di.XData(a:b), f4di.YData(a:b), 'r')
-xxx=[]
-ppp=[]
-for i=a:b
-    x = f4di.XData(i);
-    y = f4di.YData(i);
-    wr = subs(w_solution, [ids iqs], [x y]);
-    T = subs(rhs(Te_eqn), [ids iqs], [x y]);
-    wr = double(wr);
-    T = double(T);
-    xxx(end+1) = T;
-    pp = wr / (P/2) * T;
-    ppp(end+1) = pp;
-end
-
-figure
-plot(xxx, ppp, 'k');
-%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% mm=fimplicit(ids^2+iqs^2==dist_4^2); % 왜 mm.XData는 1x0임?
+% drawnow;
+% a=my_nearest_index(mm, ids_mn, iqs_mn);
+% b=my_nearest_index(mm, sol_ids, sol_iqs);
+% if a > b
+%     [a, b] = deal(b, a);
+% end
+% plot(f4di.XData(a:b), f4di.YData(a:b), 'r')
+% xxx=[]
+% ppp=[]
+% for i=a:b
+%     x = f4di.XData(i);
+%     y = f4di.YData(i);
+%     wr = subs(w_solution, [ids iqs], [x y]);
+%     T = subs(rhs(Te_eqn), [ids iqs], [x y]);
+%     wr = double(wr);
+%     T = double(T);
+%     xxx(end+1) = T;
+%     pp = wr / (P/2) * T;
+%     ppp(end+1) = pp;
+% end
+% 
+% figure
+% plot(xxx, ppp, 'k');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%
 
 % 전압제한원과 전류제한원의 교점 구하기.
 [sol_ids, sol_iqs] = solve([w_eqn3 circle_eqn1], [ids iqs]);
