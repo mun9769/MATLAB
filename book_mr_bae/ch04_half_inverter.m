@@ -8,8 +8,8 @@ f = 1/T;
 theta = 2*pi*f*t;
 n = numel(theta);
 
-ma = 1.2; % 과변조
-ma = 0.8;
+ma = 1.2; % ~1까지 선형변조, ~약 3.24 과변조
+ma = 0.8; 
 mf = 9;
 
 v_ref = ma* sin(2*pi*f*t); % f=1/T, 주기는 T
@@ -72,5 +72,7 @@ legend
 grid on
 
 % todo: 고조파 성분 THD (page379)
+% todo: 6-step 출력전압제어 (page427) -> 이거 하면 거의 끝
+
 
 
