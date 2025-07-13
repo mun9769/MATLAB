@@ -3,6 +3,7 @@ syms Vsmax
 syms Lqs Lds Lamf 
 syms iqs ids w;
 syms Te;
+% assume(ids < 0);
 
 % fve40 example parameter
 P = 24;
@@ -17,11 +18,8 @@ eDiff = @(eqn) rhs(eqn) - lhs(eqn);
 w_eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2;
 Te_eqn = Te == 3/2*P * (ids*iqs*(Lds - Lqs) + Lamf*iqs);
 
-% 전압 제한 방정식
-w_eqn_ = @(ids, iqs, w) (Vsmax/w)^2 - ((Lamf + Lds*ids)^2 + (Lqs*iqs)^2);
-% 토크 방정식 
-Te_eqn_ = @(ids, iqs, Te) (3/2*P * (ids*iqs*(Lds - Lqs) + Lamf*iqs)) - Te;
-
+w_solution = solve(w_eqn, w);
+w_solution = w_solution(2); % 임시방편.
 
 MTPV_position=[];
 MTPA_position=[];
@@ -30,9 +28,10 @@ Pout=[];
 
 if exist('data.mat', 'file')
     load('data.mat');
-    % save('data.mat', 'MTPA_position');
+    % save('data.mat', 'MTPA_position', '-append');
     % save('data.mat', 'MTPV_position', '-append')
 else
+    % MTPA 계산
     for te=1:40
         eqn = subs(Te_eqn, Te, te);
         [x_mn, y_mn, dist] = my_Lagrange_multiplier(eDiff(eqn), ids, iqs);
@@ -45,15 +44,15 @@ else
         Pout(end+1) = wrm * te;
         wrm_list(end+1) = wrm;
     end
+
+    % MTPV 계산
+    for te=1:40
+        t_eqn = subs(Te_eqn, Te, te);
+        [x_mn, y_mn] = my_Lagrange_multiplier2(w_solution, eDiff(t_eqn), ids, iqs);
+        MTPV_position(te,:) = [x_mn y_mn];
+    end
 end
 
-for te=1:40
-
-    eqn = subs(Te_eqn, Te, te);
-    [x_mn, y_mn, dist] = my_Lagrange_multiplier2(eDiff(eqn), eDiff(w_eqn), ids, iqs, w);
-    MTPV_position(te,:) = [x_mn y_mn];
-    
-end
 
 
 % 전압 제한원
@@ -62,9 +61,6 @@ wr_val = wrpm_val*(2*pi/60) * (P/2);
 w_eqn1=subs(w_eqn, w, wr_val(3));
 w_eqn2=subs(w_eqn, w, wr_val(4));
 w_eqn3=subs(w_eqn, w, wr_val(5));
-w_solution = solve(w_eqn, w);
-w_solution = w_solution(2) % 임시방편.
-
 
 % 전류 제한원
 Te_eqn1 = subs(Te_eqn, Te, 10);

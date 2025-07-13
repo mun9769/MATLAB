@@ -1,17 +1,23 @@
-function [x_mn, y_mn, w] = my_Lagrange_multiplier2(f, g, x, y, w)
+function [x_mn, y_mn] = my_Lagrange_multiplier2(f, g, x, y)
 syms lambda
 
-Lagr = g - lambda * f;
-eqns = [diff(Lagr,x) ==0, diff(Lagr, y) == 0, diff(Lagr, w) == 0, g];
-sol = solve(eqns, [x, y, w, lambda], 'real', true);
+Lagr = f - lambda * g;
+eqns = [diff(Lagr,x) ==0, diff(Lagr, y) == 0, g==0];
+sol = solve(eqns, [x, y, lambda]); %, 'real', true); % real 붙이면 너무 느려지네
 tmp = fieldnames(sol);
 
-x_mn = vpa(sol.(tmp{1}));
-y_mn = vpa(sol.(tmp{2}));
-w = vpa(sol.(tmp{3}));
 
-x_mn = double( x_mn(1) );
-y_mn = double( y_mn(1) );
-w    = double( w(1) ); % 1번째 인자가 최소인지는 검토해야할것.
+x_mn = double(sol.(tmp{1}));
+y_mn = double(sol.(tmp{2}));
+
+idx = x_mn < 0;
+if any(idx)
+    first_idx = find(idx, 1);
+    x_mn = x_mn(first_idx);
+    y_mn = y_mn(first_idx);
+else
+    x_mn = NaN; % or handle the case where no valid index is found
+    y_mn = NaN; % or handle the case where no valid index is found
+end
 
 end
