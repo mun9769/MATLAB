@@ -42,6 +42,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure; 
+set(gcf, 'Name', 'switching pulse using compare method', 'NumberTitle', 'off');
 subplot 211, hold on;
 plot(theta, v_ref, linestyle='none', marker='.')
 plot(theta, v_c)
@@ -55,6 +56,7 @@ title('S_{HB}')
 grid on
 
 figure
+set(gcf, 'Name', 'Foundamental wave of S_{HB}', 'NumberTitle', 'off');
 plot(theta, y, 'b',theta, yfit, 'r')
 text(theta(round(n/4)), B, num2str(B))
 axis([0 theta(end) -1.2 1.2])
@@ -62,14 +64,19 @@ grid on;
 legend('S_{HB}','foundamental wave');
 
 figure
+set(gcf, 'Name', 'Harmonics of S_{HB}', 'NumberTitle', 'off');
 stem(order, nth_mag(3,:))
 title('harmonics'), xlabel('n_{th}'), ylabel('magnitude');
 
 figure; hold on;
+set(gcf, 'Name', 'Recover S_{HB}', 'NumberTitle', 'off');
 plot(theta, S_HB)
 plot(theta, recover_sum) 
 legend
 grid on
+
+a=fft(S_HB)
+
 
 % todo: 고조파 성분 THD (page379)
 % todo: 6-step 출력전압제어 (page427) -> 이거 하면 거의 끝

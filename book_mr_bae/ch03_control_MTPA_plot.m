@@ -3,6 +3,7 @@ syms Vsmax
 syms Lqs Lds Lamf 
 syms iqs ids w;
 syms Te;
+syms P;
 % assume(ids < 0);
 
 % fve40 example parameter
@@ -15,8 +16,14 @@ Ismax = 10; % Arms
 % wrpm_rated = 400; % rpm
 eDiff = @(eqn) rhs(eqn) - lhs(eqn);
 
-w_eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2;
-Te_eqn = Te == 3/2*P * (ids*iqs*(Lds - Lqs) + Lamf*iqs);
+w_eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2; % 우변이 lambda의 크기이다.??
+Te_eqn = Te == (ids*iqs*(Lds - Lqs) + Lamf*iqs)*3/2*P; 
+
+% lambda = rhs(w_eqn);
+% % 여기서 일정토크라고 가정하면 iqs는 ids에 대해서 표현할 수 있다.
+% iqs_ans = solve(Te_eqn, iqs);
+% kk = subs(lambda, iqs, iqs_ans) % 3/2*P를 빼면 배박논(5-7)식과 동일함.
+% my_latex(kk)
 
 w_solution = solve(w_eqn, w);
 w_solution = w_solution(2); % 임시방편.
@@ -89,11 +96,62 @@ sol_iqs = double(sol_iqs(1));
 a = [sol_ids sol_iqs];
 b = [ids_mn iqs_mn];
 
+% MFPT를 구해보자
+lambda = rhs(w_eqn)
+lambda = sqrt(lambda);
+% 여기서 일정토크라고 가정하면 iqs는 ids에 대해서 표현할 수 있다.
+iqs_ans = solve(Te_eqn, iqs);
+
+lambda = subs(lambda, iqs, iqs_ans); % 3/2*P를 빼면 배박논(5-7)식과 동일함.
+lambda_Te40 = subs(lambda, Te, 40);
+lambda_Te30 = subs(lambda, Te, 30);
+lambda_Te20 = subs(lambda, Te, 20);
+lambda_Te10 = subs(lambda, Te, 10);
+
+ids_ = linspace(-10, 0, 200);
+lambda_Te10_val = double(subs(lambda_Te10, ids, ids_));
+lambda_Te20_val = double(subs(lambda_Te20, ids, ids_));
+lambda_Te30_val = double(subs(lambda_Te30, ids, ids_));
+lambda_Te40_val = double(subs(lambda_Te40, ids, ids_));
+
+[~, idx_Te10] = min(lambda_Te10_val);
+[~, idx_Te20] = min(lambda_Te20_val);
+[~, idx_Te30] = min(lambda_Te30_val);
+[~, idx_Te40] = min(lambda_Te40_val);
+
+iqs_Te10 = subs(iqs_ans, [ids Te], [ids_(idx_Te10) 10]);
+iqs_Te20 = subs(iqs_ans, [ids Te], [ids_(idx_Te20) 20]);
+iqs_Te30 = subs(iqs_ans, [ids Te], [ids_(idx_Te30) 30]);
+iqs_Te40 = subs(iqs_ans, [ids Te], [ids_(idx_Te40) 40]);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 figure; hold on;
+set(gcf, 'Name', '토크 별 동작점의 이동에 따른 자속의 크기', 'NumberTitle', 'off');
+plot(ids_, lambda_Te40_val, 'displayname', 'Te=40Nm');
+plot(ids_, lambda_Te30_val, 'displayname', 'Te=30Nm');
+plot(ids_, lambda_Te20_val, 'displayname', 'Te=20Nm');
+plot(ids_, lambda_Te10_val, 'displayname', 'Te=10Nm');
+
+plot(ids_(idx_Te10), lambda_Te10_val(idx_Te10), 'ro')
+plot(ids_(idx_Te20), lambda_Te20_val(idx_Te20), 'ro')
+plot(ids_(idx_Te30), lambda_Te30_val(idx_Te30), 'ro')
+plot(ids_(idx_Te40), lambda_Te40_val(idx_Te40), 'ro')
+legend();
+
+%%
+
+
+figure; hold on;
+
+
+plot(ids_(idx_Te10), iqs_Te10, 'ro', 'linewidth', 3)
+plot(ids_(idx_Te20), iqs_Te20, 'ro', 'linewidth', 3)
+plot(ids_(idx_Te30), iqs_Te30, 'ro', 'linewidth', 3)
+plot(ids_(idx_Te40), iqs_Te40, 'ro', 'linewidth', 3)
+
+
 title("전압제한타원과 전류제한원");
 set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
 plot(MTPV_position(:,1), MTPV_position(:,2), 'k.')
