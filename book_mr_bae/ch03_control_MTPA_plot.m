@@ -6,14 +6,14 @@ syms Te;
 syms P;
 % assume(ids < 0);
 
-% fve40 example parameter
+% % fve40 example parameter
 P = 24;
 Lds = 30e-3;
 Lqs = 40e-3;
 Lamf = 0.12; % [Wb]
 Vsmax = 400;
 Ismax = 10; % Arms
-% wrpm_rated = 400; % rpm
+% % wrpm_rated = 400; % rpm
 eDiff = @(eqn) rhs(eqn) - lhs(eqn);
 
 w_eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2; % 우변이 lambda의 크기이다.??
@@ -28,7 +28,7 @@ Te_eqn = Te == (ids*iqs*(Lds - Lqs) + Lamf*iqs)*3/2*P;
 w_solution = solve(w_eqn, w);
 w_solution = w_solution(2); % 임시방편.
 
-MTPV_position=[];
+MFPT_position=[];
 MTPA_position=[];
 wrm_list=[];
 Pout=[];
@@ -36,7 +36,7 @@ Pout=[];
 if exist('data.mat', 'file')
     load('data.mat');
     % save('data.mat', 'MTPA_position', '-append');
-    % save('data.mat', 'MTPV_position', '-append')
+    % save('data.mat', 'MFPT_position', '-append')
 else
     % MTPA 계산
     for te=1:40
@@ -52,18 +52,16 @@ else
         wrm_list(end+1) = wrm;
     end
 
-    % MTPV 계산
-    for te=1:40
+    % MFPT 계산
+    for te=1:32 % 전류제한원과 닿는 지점은 Te=32Nm이다
         t_eqn = subs(Te_eqn, Te, te);
         [x_mn, y_mn] = my_Lagrange_multiplier2(w_solution, eDiff(t_eqn), ids, iqs);
-        MTPV_position(te,:) = [x_mn y_mn];
+        MFPT_position(te,:) = [x_mn y_mn];
     end
 end
 
-
-
 % 전압 제한원
-wrpm_val = [1000 1200 1400 1600 1800];
+wrpm_val = [1000 1200 1400 1600 1000];
 wr_val = wrpm_val*(2*pi/60) * (P/2);  
 w_eqn1=subs(w_eqn, w, wr_val(3));
 w_eqn2=subs(w_eqn, w, wr_val(4));
@@ -97,16 +95,15 @@ a = [sol_ids sol_iqs];
 b = [ids_mn iqs_mn];
 
 % MFPT를 구해보자
-lambda = rhs(w_eqn)
+lambda = rhs(w_eqn);
 lambda = sqrt(lambda);
-% 여기서 일정토크라고 가정하면 iqs는 ids에 대해서 표현할 수 있다.
-iqs_ans = solve(Te_eqn, iqs);
+iqs_ans = solve(Te_eqn, iqs); % 동토크 영역이므로 iqs는 ids로 표현할 수 있다.
 
 lambda = subs(lambda, iqs, iqs_ans); % 3/2*P를 빼면 배박논(5-7)식과 동일함.
-lambda_Te40 = subs(lambda, Te, 40);
-lambda_Te30 = subs(lambda, Te, 30);
-lambda_Te20 = subs(lambda, Te, 20);
 lambda_Te10 = subs(lambda, Te, 10);
+lambda_Te20 = subs(lambda, Te, 20);
+lambda_Te30 = subs(lambda, Te, 30);
+lambda_Te40 = subs(lambda, Te, 40);
 
 ids_ = linspace(-10, 0, 200);
 lambda_Te10_val = double(subs(lambda_Te10, ids, ids_));
@@ -124,23 +121,41 @@ iqs_Te20 = subs(iqs_ans, [ids Te], [ids_(idx_Te20) 20]);
 iqs_Te30 = subs(iqs_ans, [ids Te], [ids_(idx_Te30) 30]);
 iqs_Te40 = subs(iqs_ans, [ids Te], [ids_(idx_Te40) 40]);
 
+% MFPT의 전력 구하기
+power_MFPT=[];
+test = [];
+www = [];
+for i=1:size(MFPT_position(:,1),1)
+    x = MFPT_position(i,1);
+    y = MFPT_position(i,2);
+    wr = subs(w_solution, [ids iqs], [x y]);
+    tt = subs(rhs(Te_eqn), [ids iqs], [x y]);
+    wrm = double(wr) * 2/P;
+    power = wrm * tt;
+    power_MFPT(end+1) = power;
+    www(end+1) = wrm;
+end
+figure;
+plot(www(10:end), power_MFPT(10:end), 'ro')
+axis([0 500 0 5400])
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 figure; hold on;
 set(gcf, 'Name', '토크 별 동작점의 이동에 따른 자속의 크기', 'NumberTitle', 'off');
-plot(ids_, lambda_Te40_val, 'displayname', 'Te=40Nm');
-plot(ids_, lambda_Te30_val, 'displayname', 'Te=30Nm');
-plot(ids_, lambda_Te20_val, 'displayname', 'Te=20Nm');
-plot(ids_, lambda_Te10_val, 'displayname', 'Te=10Nm');
+p1=plot(ids_, lambda_Te40_val, 'displayname', 'Te=40Nm');
+p2=plot(ids_, lambda_Te30_val, 'displayname', 'Te=30Nm');
+p3=plot(ids_, lambda_Te20_val, 'displayname', 'Te=20Nm');
+p4=plot(ids_, lambda_Te10_val, 'displayname', 'Te=10Nm');
+ylabel('|\lambda_{dqs}| [Wb]'), set(get(gca, 'YLabel'), 'Rotation', 0, 'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right');
+xlabel("i_{ds} [A]");
 
 plot(ids_(idx_Te10), lambda_Te10_val(idx_Te10), 'ro')
 plot(ids_(idx_Te20), lambda_Te20_val(idx_Te20), 'ro')
 plot(ids_(idx_Te30), lambda_Te30_val(idx_Te30), 'ro')
 plot(ids_(idx_Te40), lambda_Te40_val(idx_Te40), 'ro')
-legend();
-
-%%
+legend([p1 p2 p3 p4]);
+title("토크 별 동작점의 이동에 따른 자속의 크기")
 
 
 figure; hold on;
@@ -154,7 +169,7 @@ plot(ids_(idx_Te40), iqs_Te40, 'ro', 'linewidth', 3)
 
 title("전압제한타원과 전류제한원");
 set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
-plot(MTPV_position(:,1), MTPV_position(:,2), 'k.')
+plot(MFPT_position(:,1), MFPT_position(:,2), 'k.')
 plot(sol_ids, sol_iqs, 'ro');
 f1=fimplicit(w_eqn1, 'k--');
 f2=fimplicit(w_eqn2, 'k--');
@@ -204,8 +219,8 @@ plot([-Ismax Ismax]*1.5, [0 0], 'k', 'LineWidth', 0.2);
 
 
 
-% Plot the results for MTPA and MTPV positions
-plot(MTPV_position(:,1), MTPV_position(:,2), 'go', 'DisplayName', 'MTPV Points');
+% Plot the results for MTPA and MFPT positions
+plot(MFPT_position(:,1), MFPT_position(:,2), 'go', 'DisplayName', 'MFPT Points');
 
 param_str = sprintf(...
     'Lds = %.2f mH, Lqs = %.2f mH\nLamf = %.2f Wb, P = %d, Vsmax = %.0f V', ...
