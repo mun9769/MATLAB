@@ -1,4 +1,4 @@
-function x = my_near_point_x_fxy_gxy(fxy, gxy)
+function [x,y] = my_near_point_x_fxy_gxy(fxy, gxy)
 % f = nx2
 % g = mx2
 
@@ -15,5 +15,6 @@ closest_point_fxy = fxy(row_idx, :);
 closest_point_gxy = gxy(col_idx, :);
 
 x = closest_point_fxy(1);
+y = closest_point_fxy(2);
 
 end
