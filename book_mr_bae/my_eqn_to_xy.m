@@ -1,6 +1,6 @@
 function xy = my_eqn_to_xy(F, x_range)
 syms ids iqs
-xy=[]
+xy=[];
 
 y_eqn = solve(F, iqs);
 

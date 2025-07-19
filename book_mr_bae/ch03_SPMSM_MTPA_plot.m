@@ -3,123 +3,139 @@ syms Vsmax
 syms Lqs Lds Lamf 
 syms iqs ids w;
 syms Te;
+syms P;
 
-eDiff = @(eqn) rhs(eqn) - lhs(eqn);
-
-if exist('data.mat', 'file')
-    load('data.mat'); % MTPA_position 계산이 오래걸려서 data.mat에 저장시킨다.
-    % save('data.mat', 'MTPA_position');
-end
-
-% IPMSM matlab example parameter
-Vsmax = 20 / sqrt(3);
-P = 8;
-Lds = 0.298e-3;
-Lqs = 0.298e-3;
-Lamf = 0.04366;
+to_rps = 2*pi/60;
+to_rpm = 60/2/pi;
 
 % fve40 example parameter
 P = 24;
 Lds = 30e-3;
 Lqs = 30e-3;
-Lamf = 0.32; % [Wb] % 이거만 0.2 키움
-Vsmax = 400;
-Ismax = 10; % Arms
-% wrpm_rated = 400; % rpm
+Lamf = 0.28; % [Wb]
+Vsmax = 60;
+Ismax = 8; % Arms
+eDiff = @(eqn) rhs(eqn) - lhs(eqn);
 
-% 전압 제한원
-eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2;
-wrpm_val = [1000 1200 1400 1600 1800];
-wr_val = wrpm_val*(2*pi/60) * (P/2);  
-w_eqn1=subs(eqn, w, wr_val(3));
-w_eqn2=subs(eqn, w, wr_val(4));
-w_eqn3=subs(eqn, w, wr_val(5));
-w_solution = solve(eqn, w);
+w_eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2;
+Te_eqn = Te == (ids*iqs*(Lds - Lqs) + Lamf*iqs)*3/2*P; 
+
+w_solution = solve(w_eqn, w);
+w_solution = w_solution(2); % 임시방편.
+
+MFPT_position=[];
+MTPA_position=[];
+wrm_list=[];
+Pout=[];
 
 % 전류 제한원
-eqn = Te == 3/2*P * (ids*iqs*(Lds - Lqs) + Lamf*iqs);
-Te_eqn1 = subs(eqn, Te, 10);
-Te_eqn2 = subs(eqn, Te, 20);
-Te_eqn3 = subs(eqn, Te, 30);
-Te_eqn4 = subs(eqn, Te, 40);
+eqn_Te40 = subs(Te_eqn, Te, 40);
+
 % Lagrange 승수법을 사용해서 곡선과 원점 사이의 최단거리를 구한다.
-[~, ~, dist_1] = my_Lagrange_multiplier(eDiff(Te_eqn1), ids, iqs);
-[~, ~, dist_2] = my_Lagrange_multiplier(eDiff(Te_eqn2), ids, iqs);
-[~, ~, dist_3] = my_Lagrange_multiplier(eDiff(Te_eqn3), ids, iqs);
-[ids_mn, iqs_mn, dist_4] = my_Lagrange_multiplier(eDiff(Te_eqn4), ids, iqs);
-circle_eqn1 = ids^2+iqs^2 == dist_4^2;
+[ids_MTPA_40Nm, iqs_MTPA_40Nm, dist_4] = my_Lagrange_multiplier(eDiff(eqn_Te40), ids, iqs);
 
+xy_const_torque = cell(1, 4);
 
-% 전압제한원과 전류제한원의 교점 구하기. -> none
-[sol_ids, sol_iqs] = solve([w_eqn3 circle_eqn1], [ids iqs]);
-sol_ids = double(sol_ids);
-sol_iqs = double(sol_iqs);
-sol_ids = sol_ids(1);
-sol_iqs = sol_iqs(1);
-a = [sol_ids sol_iqs];
-b = [ids_mn iqs_mn];
+% 전류제한원의 운전 영역.
+theta = linspace(0, 2*pi, 8000);
+xy_limit_circle = dist_4 * [cos(theta); sin(theta)]';
 
+ids_ub = my_near_point_x_nx2(xy_limit_circle, [ids_MTPA_40Nm iqs_MTPA_40Nm]);
+ids_lb = my_near_point_x_nx2(xy_limit_circle, [-Lamf/Lds 0]);
 
-if ~exist('MTPA_position', 'var')
-    for te=1:40
-        eqn = subs(eqn, Te, te);
-        [x_mn, y_mn, dist] = my_Lagrange_multiplier(eDiff(eqn), ids, iqs);
-        MTPA_position(te,:) = [x_mn y_mn];
-        
-        wrm = subs(w_solution, [ids iqs], [x_mn y_mn]);
-        wrm = wrm(wrm>0);
-        wrm = double(wrm) / (P/2);
-        Pout(te) = wrm * te;
+idx = xy_limit_circle(:,1) > (ids_lb-0.5) & ...
+      xy_limit_circle(:,1) < ids_ub & ...
+      xy_limit_circle(:,2) > 0;
+xy_const_torque{4} = xy_limit_circle(idx,:);
+
+wrpm_val = 140:4:380;
+wr_val = wrpm_val * to_rps * (P/2);
+aa = xy_const_torque{4};
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fig = figure; hold on;
+
+title("전압제한타원과 전류제한원");
+set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
+xlabel('d-axis [A]'); ylabel('q-axis [A]')
+axis([-10 2 -6 6]*1.5);
+pbaspect([1 1 1])
+plot([0 0], [-15 15], 'k', 'LineWidth', 0.5);
+plot([-15 15], [0 0], 'k', 'LineWidth', 0.2);
+
+f1MTPA = plot([0 0], [0 4], 'b', 'LineWidth', 2, 'displayname', 'MTPA: ~40Nm');
+
+f4di=fimplicit(ids^2+iqs^2==dist_4^2, color='k', linewidth=1.2, displayname='Current Constraint');
+drawnow;
+
+f_limit = plot(xy_const_torque{4}(:,1), xy_const_torque{4}(:,2), 'r-', 'linewidth', 2);
+
+t2 = text(-14, -8, ' ', 'interpreter', 'latex', 'fontsize',12);
+plot(-Lamf/Lds, 0, 'go', 'MarkerFaceColor', 'g');
+text(-Lamf/Lds, -0.7, '$$(-\frac{\phi_f}{L_{ds}}, 0)$$', 'interpreter', 'latex');
+
+% 전압제한타원
+kk = plot(-100, -100, 'k--', 'displayname', 'Voltage Constraint');
+f1= fimplicit(subs(w_eqn, w, wr_val(1)), 'k--');
+legend([f1MTPA f4di kk], 'Location', 'northeastoutside')
+
+OperPoint = plot(aa(1,1), aa(1,2), 'mo', 'MarkerFaceColor', 'm', 'displayname', 'Operating Point');
+
+iqs_Te = solve(Te_eqn, iqs);
+
+o = -Lamf/Lds;
+for value=wr_val
+    r = Vsmax/Lds/value;
+    ids_value = linspace(min(o + r-1, -4), o + r+0.1, 80);
+    
+    iqs_syms = solve( subs(w_eqn, w, value), iqs ) ;
+    iqs_value = subs( iqs_syms(2), ids, ids_value);
+
+    ids_value = ids_value(imag(iqs_value) == 0);
+    iqs_value = iqs_value(imag(iqs_value) == 0);
+    
+    [x, y] = my_near_point_x_fxy_gxy(aa, [ids_value; iqs_value]');
+
+    if OperPoint.XData > x %가라
+    OperPoint.XData = x;
+    OperPoint.YData = y;
     end
+
+    f1.Function = subs(w_eqn, w, value);
+    refreshdata(f1);
+    drawnow;
+
+    torque = double( subs(rhs(Te_eqn), iqs ,y) );
+
+    power = 1.5 * (value / (P/2)) * (torque) ;
+
+    t2.String = ['$$' sprintf('w_{rpm} = %.0f', value * to_rpm / (P/2)) '\ RPM' '$$' ...
+        '$$' sprintf('P_m = %.0f', power) '\ W' '$$'];
+    pause(0);
 end
 
-figure;
-plot(1:40, Pout, 'k');
-xlabel("T_e [Nm]"); ylabel("P_{out} [W]")
-title("MTPA power");
-
-figure; hold on;
-f3=fimplicit(w_eqn3, 'k--');
-f4=plot(-Lamf/Lds, 0, 'ro', displayname='전압제한타원 원점');
-drawnow;
-
-text(f3.XData(1), f3.YData(1),'w_{base}', 'backgroundColor', 'white', fontsize=12);
-
-xlabel('d-axis'); ylabel('q-axis')
-axis([-Ismax 2 -6 6]*1.5)
-pbaspect([1 1 1])
-plot([0 0], [-Ismax Ismax] *1.5, 'k', 'LineWidth', 0.5);
-plot([-Ismax Ismax]*1.5, [0 0], 'k', 'LineWidth', 0.2);
-
- 
-% figure; hold on;
-f4te=fimplicit(Te_eqn4, color='k');
-
-f4di=fimplicit(ids^2+iqs^2==dist_4^2, color='k');
-
-f1MTPA=plot(MTPA_position(:,1), MTPA_position(:,2), linewidth=2, color='b');
-drawnow;
-
-% text(f4te.XData(end-15),f4te.YData(end-15),'Te=40Nm', 'backgroundColor', 'white', fontsize=12);
-text(MTPA_position(end,1), MTPA_position(end,2), 'MTPA: ~40Nm', ...
-    backgroundcolor='white', ...
-    fontsize=12, color='b');
-
-xlabel('d-axis'); ylabel('q-axis')
-axis([-Ismax 2 -6 6]*1.5)
-pbaspect([1 1 1])
-plot([0 0], [-Ismax Ismax] *1.5, 'k', 'LineWidth', 0.5);
-plot([-Ismax Ismax]*1.5, [0 0], 'k', 'LineWidth', 0.2); 
 
 
-param_str = sprintf(...
-    'Lds = %.2f mH, Lqs = %.2f mH\nLamf = %.2f Wb, P = %d, Vsmax = %.0f V', ...
-    Lds*1e3, Lqs*1e3, Lamf, P, Vsmax);
 
-text(-14, -8, param_str, ...
-    'HorizontalAlignment', 'left', ...
-    'VerticalAlignment', 'middle', ...
-    'FontSize', 10, ...
-    'Interpreter', 'none');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
