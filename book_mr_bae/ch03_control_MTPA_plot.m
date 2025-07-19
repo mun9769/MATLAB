@@ -33,7 +33,7 @@ Pout=[];
 if exist('data.mat', 'file')
     load('data.mat');
     % save('data.mat', 'MTPA_position', '-append');
-    % save('data.mat', 'MFPT_position', '-append')
+    % save('data.mat', 'MFPT_position', '-append');
 else
     % MTPA 계산
     for te=1:40
@@ -52,9 +52,6 @@ end
 
 to_rps = 2*pi/60;
 to_rpm = 60/2/pi;
-
-wrpm_val = 100:1:300;
-wr_val = wrpm_val * to_rps * (P/2);
 
 
 % 전류 제한원
@@ -96,7 +93,6 @@ idx = xy_Te30(:,1) > ids_lb & xy_Te30(:,1) < ids_ub;
 
 xy_const_torque{3} = xy_Te30(idx,:);
 
-
 % T=20Nm 곡선의 운전 영역.
 ids_ub = my_near_point_x_nx2(xy_Te20, [ids_MTPA_20Nm iqs_MTPA_20Nm]);
 ids_lb = my_near_point_x_fxy_gxy(xy_Te20, MFPT_position);
@@ -110,8 +106,11 @@ ids_lb = my_near_point_x_fxy_gxy(xy_Te10, MFPT_position);
 idx = xy_Te10(:,1) > ids_lb & xy_Te10(:,1) < ids_ub;
 xy_const_torque{1} = xy_Te10(idx,:);
 
-aa = [xy_const_torque{4}; MFPT_position];
-%%% aa를 바꾸면 댐
+
+
+wrpm_val = 140:1:300;
+wr_val = wrpm_val * to_rps * (P/2);
+aa = [xy_const_torque{3}; MFPT_position]; %%% aa를 바꾸면 댐
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -162,15 +161,24 @@ f1= fimplicit(subs(w_eqn, w, wr_val(1)), 'k--');
 
 legend([f1MTPA f_MFPT f4di kk], 'Location', 'northeastoutside')
 
+kkk = plot(aa(1,1), aa(1,2), 'mo', 'MarkerFaceColor', 'm', 'displayname', 'Operating Point');
 
+ids_value = linspace(-6, -2, 40);
 for value=wr_val
-    eqn = subs(w_eqn, w, value);
+    iqs_syms = solve( subs(w_eqn, w, value), iqs ) ;
+    iqs_value = subs( iqs_syms(2), ids, ids_value);
+
+    [x, y] = my_near_point_x_fxy_gxy(aa, [ids_value; iqs_value]');
+
+    kkk.XData = x;
+    kkk.YData = y;
+
     f1.Function = subs(w_eqn, w, value);
     refreshdata(f1);
     drawnow;
 
     t2.String = ['$$' sprintf('w_{rpm} = %.0f', value * to_rpm / (P/2)) '\ RPM' '$$' '(~300 RPM)'];
-    pause(0.1);
+    pause(0);
 end
 
 
@@ -288,24 +296,24 @@ figure;
 title("전압제한타원과 전류제한원");
 set(gcf, 'Name', 'MTPA - limit Current Region - MFPT', 'NumberTitle', 'off');
 plot(www(1:end-2), power_MFPT(1:end-2), 'r.')
-axis([0 500 0 5800])
+axis([0 500 0 1000])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
 
-% figure; hold on;
-% set(gcf, 'Name', '토크 별 동작점의 이동에 따른 자속의 크기', 'NumberTitle', 'off');
-% p1=plot(ids_, lambda_Te40_val, 'displayname', 'Te=40Nm');
-% p2=plot(ids_, lambda_Te30_val, 'displayname', 'Te=30Nm');
-% p3=plot(ids_, lambda_Te20_val, 'displayname', 'Te=20Nm');
-% p4=plot(ids_, lambda_Te10_val, 'displayname', 'Te=10Nm');
-% ylabel('|\lambda_{dqs}| [Wb]'), set(get(gca, 'YLabel'), 'Rotation', 0, 'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right');
-% xlabel("i_{ds} [A]");
-% 
-% plot(ids_(idx_Te10), lambda_Te10_val(idx_Te10), 'ro')
-% plot(ids_(idx_Te20), lambda_Te20_val(idx_Te20), 'ro')
-% plot(ids_(idx_Te30), lambda_Te30_val(idx_Te30), 'ro')
-% plot(ids_(idx_Te40), lambda_Te40_val(idx_Te40), 'ro')
-% legend([p1 p2 p3 p4]);
-% title("토크 별 동작점의 이동에 따른 자속의 크기")
+figure; hold on;
+set(gcf, 'Name', '토크 별 동작점의 이동에 따른 자속의 크기', 'NumberTitle', 'off');
+p1=plot(ids_, lambda_Te40_val, 'displayname', 'Te=40Nm');
+p2=plot(ids_, lambda_Te30_val, 'displayname', 'Te=30Nm');
+p3=plot(ids_, lambda_Te20_val, 'displayname', 'Te=20Nm');
+p4=plot(ids_, lambda_Te10_val, 'displayname', 'Te=10Nm');
+ylabel('|\lambda_{dqs}| [Wb]'), set(get(gca, 'YLabel'), 'Rotation', 0, 'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right');
+xlabel("i_{ds} [A]");
+
+plot(ids_(idx_Te10), lambda_Te10_val(idx_Te10), 'ro')
+plot(ids_(idx_Te20), lambda_Te20_val(idx_Te20), 'ro')
+plot(ids_(idx_Te30), lambda_Te30_val(idx_Te30), 'ro')
+plot(ids_(idx_Te40), lambda_Te40_val(idx_Te40), 'ro')
+legend([p1 p2 p3 p4]);
+title("토크 별 동작점의 이동에 따른 자속의 크기")
