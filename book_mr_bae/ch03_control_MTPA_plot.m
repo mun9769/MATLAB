@@ -12,7 +12,8 @@ syms P;
 % 낮은 lambda 그리고 최대 토크인 지점.
 % 배박논은 왜 약계자를 해야한다고 하지?
 
-% MFPT는 MTPV와 같나? ㅇㅇㅇ
+
+% Vsmax = 400은 너무 커.
 
 % % fve40 example parameter
 P = 24;
@@ -68,6 +69,7 @@ else
     end
 end
 
+
 % 전압 제한원
 wrpm_val = [1000 1200 1400 1600 1000];
 wr_val = wrpm_val*(2*pi/60) * (P/2);  
@@ -81,46 +83,109 @@ Te_eqn2 = subs(Te_eqn, Te, 20);
 Te_eqn3 = subs(Te_eqn, Te, 30);
 Te_eqn4 = subs(Te_eqn, Te, 40);
 
-iqs_ans_Te30 = solve(Te_eqn3, iqs);
-x_val = linspace(0, -10, 100);
-y_val = subs(iqs_ans_Te30, x_val);
-y_val = double(y_val);
-Te30_xy = [x_val; y_val];
+Te30_xy = my_eqn_to_xy(Te_eqn3, [0 -10]);
 
 
 % Lagrange 승수법을 사용해서 곡선과 원점 사이의 최단거리를 구한다.
-[~, ~, dist_1] = my_Lagrange_multiplier(eDiff(Te_eqn1), ids, iqs);
-[~, ~, dist_2] = my_Lagrange_multiplier(eDiff(Te_eqn2), ids, iqs);
-[a, b, dist_3] = my_Lagrange_multiplier(eDiff(Te_eqn3), ids, iqs);
-[ids_mn, iqs_mn, dist_4] = my_Lagrange_multiplier(eDiff(Te_eqn4), ids, iqs);
-circle_eqn1 = @(ids, iqs) ids^2+iqs^2 - dist_4^2;
+[~, ~, dist_1]                         = my_Lagrange_multiplier(eDiff(Te_eqn1), ids, iqs);
+[~, ~, dist_2]                         = my_Lagrange_multiplier(eDiff(Te_eqn2), ids, iqs);
+[ids_MTPA_30Nm, iqs_MTPA_30Nm, dist_3] = my_Lagrange_multiplier(eDiff(Te_eqn3), ids, iqs);
+[ids_mn, iqs_mn, dist_4]               = my_Lagrange_multiplier(eDiff(Te_eqn4), ids, iqs);
 
 theta = linspace(0, 2*pi, 500);
-x_circle = dist_4 * cos(theta);
-y_circle = dist_4 * sin(theta);
-limit_circle_xy = [x_circle; y_circle];
+limit_circle_xy = dist_4 * [cos(theta); sin(theta)]';
 
 
-% 전류제한원에서 MTPA인 점 찾기.
-st = my_nearest_index_2xn(limit_circle_xy, ...
-    [ids_mn iqs_mn]);
-en = my_nearest_index_2xn(limit_circle_xy, ...
-    [MFPT_position(end,1) MFPT_position(end,2)]);
+% 전류제한원의 운전 영역.
+ids_ub = my_near_point_x_nx2(limit_circle_xy, [ids_mn iqs_mn]);
+ids_lb = my_near_point_x_nx2(limit_circle_xy, [MFPT_position(end,1) MFPT_position(end,2)]);
 
-% Te=30곡선에서 MTPA인 점 찾기.
-st_te30 = my_nearest_index_2xn(Te30_xy, ...
-    [a b]);
-en_te30 = my_nearest_index_2xn(Te30_xy, ...
-    [MFPT_position(end,1) MFPT_position(end,2)]); % todo: _2xn_2xm
+idx = limit_circle_xy(:,1) > ids_lb & ...
+      limit_circle_xy(:,1) < ids_ub & ...
+      limit_circle_xy(:,2) > 0;
+limit_current_operation_xy = limit_circle_xy(idx, :);
 
-% 전압제한원과 전류제한원의 교점 구하기.
-[sol_ids, sol_iqs] = solve([w_eqn3 circle_eqn1], [ids iqs]);
-sol_ids = double(sol_ids(1));
-sol_iqs = double(sol_iqs(1));
-a = [sol_ids sol_iqs];
-b = [ids_mn iqs_mn];
 
-% ids에 대해서 lambda가 최소가 되는 ids를 구하자.
+% T=30Nm 곡선의 운전 영역.
+ids_ub = my_near_point_x_nx2(Te30_xy, [ids_MTPA_30Nm iqs_MTPA_30Nm]);
+ids_lb = my_near_point_x_fxy_gxy(Te30_xy, MFPT_position);
+
+idx = Te30_xy(:,1) > ids_lb & Te30_xy(:,1) < ids_ub;
+Te30_operate_xy = Te30_xy(idx,:);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+figure; hold on;
+
+title("전압제한타원과 전류제한원");
+set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
+xlabel('d-axis'); ylabel('q-axis')
+axis([-Ismax 2 -6 6]*1.5)
+pbaspect([1 1 1])
+plot([0 0], [-Ismax Ismax] *1.5, 'k', 'LineWidth', 0.5);
+plot([-Ismax Ismax]*1.5, [0 0], 'k', 'LineWidth', 0.2);
+
+
+plot(Te30_operate_xy(:,1), Te30_operate_xy(:,2), 'r-', 'linewidth', 2);
+plot(limit_current_operation_xy(:,1), limit_current_operation_xy(:,2), 'r-', 'linewidth', 2);
+
+
+% 전압제한타원
+f1=fimplicit(w_eqn1, 'k--');
+f2=fimplicit(w_eqn2, 'k--');
+f3=fimplicit(w_eqn3, 'k--');
+f4=plot(-Lamf/Lds, 0, 'ro', displayname='전압제한타원 원점');
+drawnow;
+text(f1.XData(1), f1.YData(1),'w_{1}', 'backgroundColor', 'white', fontsize=12);
+text(f2.XData(1), f2.YData(1),'w_{2}', 'backgroundColor', 'white', fontsize=12);
+text(f3.XData(1), f3.YData(1),'w_{3}', 'backgroundColor', 'white', 'fontsize', 12);
+
+
+% 전류제한원
+f1te=fimplicit(Te_eqn1, 'color', 'k');
+f2te=fimplicit(Te_eqn2, color='k');
+f3te=fimplicit(Te_eqn3, color='k');
+f4te=fimplicit(Te_eqn4, color='k');
+
+f2di=fimplicit(ids^2+iqs^2==dist_2^2, color='k');
+f3di=fimplicit(ids^2+iqs^2==dist_3^2, color='k');
+f4di=fimplicit(ids^2+iqs^2==dist_4^2, color='k');
+drawnow;
+text(f1te.XData(end-3), f1te.YData(end-3),'Te=10Nm', 'backgroundColor', 'white', fontsize=12);
+text(f2te.XData(end-6), f2te.YData(end-6),'Te=20Nm', 'backgroundColor', 'white', fontsize=12);
+text(f3te.XData(end-9), f3te.YData(end-9),'Te=30Nm', 'backgroundColor', 'white', fontsize=12);
+text(f4te.XData(end-15),f4te.YData(end-15),'Te=40Nm', 'backgroundColor', 'white', fontsize=12);
+
+% MTPA positions
+f1MTPA=plot(MTPA_position(:,1), MTPA_position(:,2), linewidth=2, color='b');
+text(MTPA_position(end,1), MTPA_position(end,2)+0.4, 'MTPA: ~40Nm', ...
+    horizontalalignment= 'right',...
+    fontsize=12, color='b');
+
+% MFPT positions
+plot(MFPT_position(:,1), MFPT_position(:,2), 'g-', 'linewidth', 2, 'DisplayName', 'MFPT Points');
+
+% parameter text
+param_str = sprintf(...
+    'Lds = %.2f mH, Lqs = %.2f mH\nLamf = %.2f Wb, P = %d, Vsmax = %.0f V', ...
+    Lds*1e3, Lqs*1e3, Lamf, P, Vsmax);
+text(-14, -8, param_str, ...
+    'HorizontalAlignment', 'left', ...
+    'VerticalAlignment', 'middle', ...
+    'FontSize', 10, ...
+    'Interpreter', 'none');
+
+
+
+
+% figure; % 그닥 중요하지 않은듯?
+% title("MTPA power Analysis");
+% plot(wrm_list, Pout, 'k.');
+% xlabel("w_{rm} [rad/s]"), ylabel("P_{out} [W]")
+% set(gcf, 'Name', 'MTPA power Analysis', 'NumberTitle', 'off'); 
+
+%%
+% lambda가 최소가 되는 ids를 구하자.
 lambda = rhs(w_eqn);
 lambda = sqrt(lambda);
 iqs_ans = solve(Te_eqn, iqs); % 동토크 영역이므로 iqs는 ids로 표현할 수 있다.
@@ -176,14 +241,14 @@ end
 %     www(end+1) = wrm;
 % end
 
-for i=st_te30:en_te30 
-    x = Te30_xy(1,i);
-    y = Te30_xy(2,i);
-
-    [wrm, power] = get_power_by_idqs(x, y, w_solution, rhs(Te_eqn), P);
-    power_MFPT(end+1) = power;
-    www(end+1) = wrm;
-end
+% for i=st_te30:en_te30 
+%     x = Te30_xy(1,i);
+%     y = Te30_xy(2,i);
+% 
+%     [wrm, power] = get_power_by_idqs(x, y, w_solution, rhs(Te_eqn), P);
+%     power_MFPT(end+1) = power;
+%     www(end+1) = wrm;
+% end
 
 for i=1:size(MFPT_position(:,1),1)
     x = MFPT_position(i,1);
@@ -193,86 +258,15 @@ for i=1:size(MFPT_position(:,1),1)
     power_MFPT(end+1) = power;
     www(end+1) = wrm;
 end
+
 figure;
 title("전압제한타원과 전류제한원");
 set(gcf, 'Name', 'MTPA - limit Current Region - MFPT', 'NumberTitle', 'off');
 plot(www(1:end-2), power_MFPT(1:end-2), 'r.')
 axis([0 500 0 5800])
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-figure; hold on;
-title("전압제한타원과 전류제한원");
-set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
-xlabel('d-axis'); ylabel('q-axis')
-axis([-Ismax 2 -6 6]*1.5)
-pbaspect([1 1 1])
-plot([0 0], [-Ismax Ismax] *1.5, 'k', 'LineWidth', 0.5);
-plot([-Ismax Ismax]*1.5, [0 0], 'k', 'LineWidth', 0.2);
-
-% 
-plot(x_val(st_te30:en_te30), y_val(st_te30:en_te30), 'r-', 'linewidth',2);
-
-% Current limit Region
-plot(limit_circle_xy(1,st:en), limit_circle_xy(2,st:en), 'r-', 'linewidth',3)
-
-% 전압제한타원과 전류제한원 만나는 지점
-plot(sol_ids, sol_iqs, 'ro');
-
-% 전압제한타원
-f1=fimplicit(w_eqn1, 'k--');
-f2=fimplicit(w_eqn2, 'k--');
-f3=fimplicit(w_eqn3, 'k--');
-f4=plot(-Lamf/Lds, 0, 'ro', displayname='전압제한타원 원점');
-drawnow;
-text(f1.XData(1), f1.YData(1),'w_{1}', 'backgroundColor', 'white', fontsize=12);
-text(f2.XData(1), f2.YData(1),'w_{2}', 'backgroundColor', 'white', fontsize=12);
-text(f3.XData(1), f3.YData(1),'w_{3}', 'backgroundColor', 'white', 'fontsize', 12);
-
-
-% 전류제한원
-f1te=fimplicit(Te_eqn1, 'color', 'k');
-f2te=fimplicit(Te_eqn2, color='k');
-f3te=fimplicit(Te_eqn3, color='k');
-f4te=fimplicit(Te_eqn4, color='k');
-
-f2di=fimplicit(ids^2+iqs^2==dist_2^2, color='k');
-f3di=fimplicit(ids^2+iqs^2==dist_3^2, color='k');
-f4di=fimplicit(ids^2+iqs^2==dist_4^2, color='k');
-drawnow;
-text(f1te.XData(end-3), f1te.YData(end-3),'Te=10Nm', 'backgroundColor', 'white', fontsize=12);
-text(f2te.XData(end-6), f2te.YData(end-6),'Te=20Nm', 'backgroundColor', 'white', fontsize=12);
-text(f3te.XData(end-9), f3te.YData(end-9),'Te=30Nm', 'backgroundColor', 'white', fontsize=12);
-text(f4te.XData(end-15),f4te.YData(end-15),'Te=40Nm', 'backgroundColor', 'white', fontsize=12);
-
-% MTPA positions
-f1MTPA=plot(MTPA_position(:,1), MTPA_position(:,2), linewidth=2, color='b');
-text(MTPA_position(end,1), MTPA_position(end,2)+0.4, 'MTPA: ~40Nm', ...
-    horizontalalignment= 'right',...
-    fontsize=12, color='b');
-
-% MFPT positions
-plot(MFPT_position(:,1), MFPT_position(:,2), 'g-', 'linewidth', 2, 'DisplayName', 'MFPT Points');
-
-% parameter text
-param_str = sprintf(...
-    'Lds = %.2f mH, Lqs = %.2f mH\nLamf = %.2f Wb, P = %d, Vsmax = %.0f V', ...
-    Lds*1e3, Lqs*1e3, Lamf, P, Vsmax);
-text(-14, -8, param_str, ...
-    'HorizontalAlignment', 'left', ...
-    'VerticalAlignment', 'middle', ...
-    'FontSize', 10, ...
-    'Interpreter', 'none');
-
-
-
-
-% figure; % 그닥 중요하지 않은듯?
-% title("MTPA power Analysis");
-% plot(wrm_list, Pout, 'k.');
-% xlabel("w_{rm} [rad/s]"), ylabel("P_{out} [W]")
-% set(gcf, 'Name', 'MTPA power Analysis', 'NumberTitle', 'off'); 
 
 
 % figure; hold on;
