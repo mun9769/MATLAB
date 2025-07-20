@@ -108,15 +108,15 @@ xy_const_torque{1} = xy_Te10(idx,:);
 
 
 
-wrpm_val = 140:1:300;
-wr_val = wrpm_val * to_rps * (P/2);
-aa = [xy_const_torque{3}; MFPT_position]; %%% aa를 바꾸면 댐
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-fig = figure; hold on;
+fig = figure; 
+h_ax = axes(fig);
+hold on;
 
-title("전압제한타원과 전류제한원");
+
+title("IPMSM에서의 전압제한타원과 전류제한원(T_e^{*} = 30Nm)");
 set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
 xlabel('d-axis [A]'); ylabel('q-axis [A]')
 axis([-10 2 -6 6]*1.5);
@@ -155,15 +155,29 @@ t2 = text(-14, -8, ' ', 'interpreter', 'latex', 'fontsize',12);
 plot(-Lamf/Lds, 0, 'go', 'MarkerFaceColor', 'g');
 text(-Lamf/Lds, -0.7, '$$(-\frac{\phi_f}{L_{ds}}, 0)$$', 'interpreter', 'latex');
 
+
+
+
+wrpm_val = 100:1:300;
+wr_val = wrpm_val * to_rps * (P/2);
+aa = [xy_const_torque{3}; MFPT_position];
+vidObj = VideoWriter('te30_IPMSM.mp4');
+open(vidObj);
+
+
+
 % 전압제한타원
 kk = plot(-100, -100, 'k--', 'displayname', 'Voltage Constraint');
 f1= fimplicit(subs(w_eqn, w, wr_val(1)), 'k--');
-
 legend([f1MTPA f_MFPT f4di kk], 'Location', 'northeastoutside')
-
 kkk = plot(aa(1,1), aa(1,2), 'mo', 'MarkerFaceColor', 'm', 'displayname', 'Operating Point');
 
+
 ids_value = linspace(-6, -2, 40);
+
+
+
+
 for value=wr_val
     iqs_syms = solve( subs(w_eqn, w, value), iqs ) ;
     iqs_value = subs( iqs_syms(2), ids, ids_value);
@@ -178,10 +192,13 @@ for value=wr_val
     drawnow;
 
     t2.String = ['$$' sprintf('w_{rpm} = %.0f', value * to_rpm / (P/2)) '\ RPM' '$$' '(~300 RPM)'];
-    pause(0);
+    % pause(0);
+    currFrame = getframe(fig);
+    writeVideo(vidObj, currFrame);
 end
 
 
+close(vidObj);
 
 
 
@@ -203,19 +220,6 @@ end
 
 
 
-
-
-
-
-
-% text(f3.XData(1), f3.YData(1),'w_{3}', 'backgroundColor', 'white', 'fontsize', 12);
-
-
-% figure; % 그닥 중요하지 않은듯?
-% title("MTPA power Analysis");
-% plot(wrm_list, Pout, 'k.');
-% xlabel("w_{rm} [rad/s]"), ylabel("P_{out} [W]")
-% set(gcf, 'Name', 'MTPA power Analysis', 'NumberTitle', 'off'); 
 
 %%
 % lambda가 최소가 되는 ids를 구하자.
@@ -224,26 +228,55 @@ lambda = sqrt(lambda);
 iqs_ans = solve(Te_eqn, iqs); % 동토크 영역이므로 iqs는 ids로 표현할 수 있다.
 
 lambda = subs(lambda, iqs, iqs_ans); % 3/2*P를 빼면 배박논(5-7)식과 동일함.
-lambda_Te10 = subs(lambda, Te, 10);
-lambda_Te20 = subs(lambda, Te, 20);
-lambda_Te30 = subs(lambda, Te, 30);
-lambda_Te40 = subs(lambda, Te, 40);
 
-ids_ = linspace(-10, 0, 200);
-lambda_Te10_val = double(subs(lambda_Te10, ids, ids_));
-lambda_Te20_val = double(subs(lambda_Te20, ids, ids_));
-lambda_Te30_val = double(subs(lambda_Te30, ids, ids_));
-lambda_Te40_val = double(subs(lambda_Te40, ids, ids_));
 
-[~, idx_Te10] = min(lambda_Te10_val);
-[~, idx_Te20] = min(lambda_Te20_val);
-[~, idx_Te30] = min(lambda_Te30_val);
-[~, idx_Te40] = min(lambda_Te40_val);
 
-iqs_Te10 = subs(iqs_ans, [ids Te], [ids_(idx_Te10) 10]);
-iqs_Te20 = subs(iqs_ans, [ids Te], [ids_(idx_Te20) 20]);
-iqs_Te30 = subs(iqs_ans, [ids Te], [ids_(idx_Te30) 30]);
-iqs_Te40 = subs(iqs_ans, [ids Te], [ids_(idx_Te40) 40]);
+figure; hold on;
+set(gcf, 'Name', '토크 별 동작점의 이동에 따른 자속의 크기', 'NumberTitle', 'off');
+% title("토크 별 동작점의 이동에 따른 자속의 크기")
+ylabel('|\lambda_{dqs}| [Wb]'), set(get(gca, 'YLabel'), 'Rotation', 0, 'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right');
+xlabel("i_{ds} [A]");
+
+plots = cell(1, 40);
+MFPTs=[];
+for te=1:40
+    lambda_te = subs(lambda, Te, te);
+    
+    ids_ = linspace(-10, 0 ,200);
+    lambda_te_val = double( subs(lambda_te, ids, ids_) );
+    [~, idx_te] = min(lambda_te_val);
+
+    iqs_te = subs(iqs_ans, [ids Te], [ids_(idx_te) te]);
+
+
+    plots{te}=plot(ids_, lambda_te_val);%, 'displayname', 'Te=10Nm');
+    MFPTs(te,:) = [ids_(idx_te), lambda_te_val(idx_te)];
+    % plot(ids_(idx_te), lambda_te_val(idx_te), 'r.');%, 'MarkerFaceColor', 'r')
+end
+ff = plot(MFPTs(:,1), MFPTs(:,2), 'r-', 'linewidth',2, 'displayname', "MFPT Line");
+kk = legend([ff]);%, '')
+
+
+% lambda_Te10 = subs(lambda, Te, 10);
+% lambda_Te20 = subs(lambda, Te, 20);
+% lambda_Te30 = subs(lambda, Te, 30);
+% lambda_Te40 = subs(lambda, Te, 40);
+% 
+% ids_ = linspace(-10, 0, 200);
+% lambda_Te10_val = double(subs(lambda_Te10, ids, ids_));
+% lambda_Te20_val = double(subs(lambda_Te20, ids, ids_));
+% lambda_Te30_val = double(subs(lambda_Te30, ids, ids_));
+% lambda_Te40_val = double(subs(lambda_Te40, ids, ids_));
+% 
+% [~, idx_Te10] = min(lambda_Te10_val);
+% [~, idx_Te20] = min(lambda_Te20_val);
+% [~, idx_Te30] = min(lambda_Te30_val);
+% [~, idx_Te40] = min(lambda_Te40_val);
+% 
+% iqs_Te10 = subs(iqs_ans, [ids Te], [ids_(idx_Te10) 10]);
+% iqs_Te20 = subs(iqs_ans, [ids Te], [ids_(idx_Te20) 20]);
+% iqs_Te30 = subs(iqs_ans, [ids Te], [ids_(idx_Te30) 30]);
+% iqs_Te40 = subs(iqs_ans, [ids Te], [ids_(idx_Te40) 40]);
 
 % MFPT의 전력 구하기
 power_MFPT=[];
@@ -299,7 +332,7 @@ plot(www(1:end-2), power_MFPT(1:end-2), 'r.')
 axis([0 500 0 1000])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+%%
 
 
 figure; hold on;

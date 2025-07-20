@@ -12,7 +12,7 @@ to_rpm = 60/2/pi;
 P = 24;
 Lds = 30e-3;
 Lqs = 30e-3;
-Lamf = 0.28; % [Wb]
+Lamf = 0.31; % [Wb]
 Vsmax = 60;
 Ismax = 8; % Arms
 eDiff = @(eqn) rhs(eqn) - lhs(eqn);
@@ -29,7 +29,7 @@ wrm_list=[];
 Pout=[];
 
 % 전류 제한원
-eqn_Te40 = subs(Te_eqn, Te, 40);
+eqn_Te40 = subs(Te_eqn, Te, 60);
 
 % Lagrange 승수법을 사용해서 곡선과 원점 사이의 최단거리를 구한다.
 [ids_MTPA_40Nm, iqs_MTPA_40Nm, dist_4] = my_Lagrange_multiplier(eDiff(eqn_Te40), ids, iqs);
@@ -48,14 +48,14 @@ idx = xy_limit_circle(:,1) > (ids_lb-0.5) & ...
       xy_limit_circle(:,2) > 0;
 xy_const_torque{4} = xy_limit_circle(idx,:);
 
-wrpm_val = 140:4:380;
+wrpm_val = 100:2:380;
 wr_val = wrpm_val * to_rps * (P/2);
 aa = xy_const_torque{4};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% view %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fig = figure; hold on;
 
-title("전압제한타원과 전류제한원");
+title("SPMSM의 전압제한원과 전류제한원 (T_e^{*} = 60Nm)");
 set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
 xlabel('d-axis [A]'); ylabel('q-axis [A]')
 axis([-10 2 -6 6]*1.5);
@@ -63,7 +63,7 @@ pbaspect([1 1 1])
 plot([0 0], [-15 15], 'k', 'LineWidth', 0.5);
 plot([-15 15], [0 0], 'k', 'LineWidth', 0.2);
 
-f1MTPA = plot([0 0], [0 4], 'b', 'LineWidth', 2, 'displayname', 'MTPA: ~40Nm');
+f1MTPA = plot([0 0], [0 5.4], 'b', 'LineWidth', 2, 'displayname', 'MTPA: ~60Nm');
 
 f4di=fimplicit(ids^2+iqs^2==dist_4^2, color='k', linewidth=1.2, displayname='Current Constraint');
 drawnow;
@@ -84,6 +84,10 @@ OperPoint = plot(aa(1,1), aa(1,2), 'mo', 'MarkerFaceColor', 'm', 'displayname', 
 iqs_Te = solve(Te_eqn, iqs);
 
 o = -Lamf/Lds;
+
+vidObj = VideoWriter('te40_SPMSM.avi');
+open(vidObj);
+
 for value=wr_val
     r = Vsmax/Lds/value;
     ids_value = linspace(min(o + r-1, -4), o + r+0.1, 80);
@@ -111,8 +115,13 @@ for value=wr_val
 
     t2.String = ['$$' sprintf('w_{rpm} = %.0f', value * to_rpm / (P/2)) '\ RPM' '$$' ...
         '$$' sprintf('P_m = %.0f', power) '\ W' '$$'];
-    pause(0);
+    % pause(0);
+    currFrame = getframe(fig);
+    writeVideo(vidObj, currFrame);
 end
+
+
+close(vidObj);
 
 
 
