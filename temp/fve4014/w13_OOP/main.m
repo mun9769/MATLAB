@@ -34,6 +34,7 @@ Kps=J*Wsc/Kt;
 Kis=J*Wsc^2/5/Kt;
 Kas=1/Kps;
 
+Vsmax = 60;
 
 
 

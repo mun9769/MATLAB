@@ -10,7 +10,7 @@ TL=20;
 P = 24;
 Rs=2;
 Lds = 30.0e-3; %[H] 
-Lqs = 30.0e-3; %[H]
+Lqs = 40.0e-3; %[H]
 Lamf = 0.12; %[Wb]
 
 Wrpm_rated = 400;
@@ -26,4 +26,5 @@ Wcc = 100*2*pi;
 Kpc = Lds*Wcc;
 Kic = Rs*Wcc;
 
+Vsmax= 300;
 

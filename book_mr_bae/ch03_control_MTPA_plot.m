@@ -5,6 +5,8 @@ syms iqs ids w;
 syms Te;
 syms P;
 
+record = 0;
+
 % fve40 example parameter
 P = 24;
 Lds = 30e-3;
@@ -161,8 +163,6 @@ text(-Lamf/Lds, -0.7, '$$(-\frac{\phi_f}{L_{ds}}, 0)$$', 'interpreter', 'latex')
 wrpm_val = 100:1:300;
 wr_val = wrpm_val * to_rps * (P/2);
 aa = [xy_const_torque{3}; MFPT_position];
-vidObj = VideoWriter('te30_IPMSM.mp4');
-open(vidObj);
 
 
 
@@ -176,7 +176,10 @@ kkk = plot(aa(1,1), aa(1,2), 'mo', 'MarkerFaceColor', 'm', 'displayname', 'Opera
 ids_value = linspace(-6, -2, 40);
 
 
-
+if record == 1
+vidObj = VideoWriter('te30_IPMSM.mp4');
+open(vidObj);
+end
 
 for value=wr_val
     iqs_syms = solve( subs(w_eqn, w, value), iqs ) ;
@@ -193,31 +196,15 @@ for value=wr_val
 
     t2.String = ['$$' sprintf('w_{rpm} = %.0f', value * to_rpm / (P/2)) '\ RPM' '$$' '(~300 RPM)'];
     % pause(0);
+    if record == 1
     currFrame = getframe(fig);
     writeVideo(vidObj, currFrame);
+    end
 end
 
-
+if record == 1
 close(vidObj);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+end
 
 
 
@@ -228,8 +215,6 @@ lambda = sqrt(lambda);
 iqs_ans = solve(Te_eqn, iqs); % 동토크 영역이므로 iqs는 ids로 표현할 수 있다.
 
 lambda = subs(lambda, iqs, iqs_ans); % 3/2*P를 빼면 배박논(5-7)식과 동일함.
-
-
 
 figure; hold on;
 set(gcf, 'Name', '토크 별 동작점의 이동에 따른 자속의 크기', 'NumberTitle', 'off');
@@ -257,28 +242,7 @@ ff = plot(MFPTs(:,1), MFPTs(:,2), 'r-', 'linewidth',2, 'displayname', "MFPT Line
 kk = legend([ff]);%, '')
 
 
-% lambda_Te10 = subs(lambda, Te, 10);
-% lambda_Te20 = subs(lambda, Te, 20);
-% lambda_Te30 = subs(lambda, Te, 30);
-% lambda_Te40 = subs(lambda, Te, 40);
-% 
-% ids_ = linspace(-10, 0, 200);
-% lambda_Te10_val = double(subs(lambda_Te10, ids, ids_));
-% lambda_Te20_val = double(subs(lambda_Te20, ids, ids_));
-% lambda_Te30_val = double(subs(lambda_Te30, ids, ids_));
-% lambda_Te40_val = double(subs(lambda_Te40, ids, ids_));
-% 
-% [~, idx_Te10] = min(lambda_Te10_val);
-% [~, idx_Te20] = min(lambda_Te20_val);
-% [~, idx_Te30] = min(lambda_Te30_val);
-% [~, idx_Te40] = min(lambda_Te40_val);
-% 
-% iqs_Te10 = subs(iqs_ans, [ids Te], [ids_(idx_Te10) 10]);
-% iqs_Te20 = subs(iqs_ans, [ids Te], [ids_(idx_Te20) 20]);
-% iqs_Te30 = subs(iqs_ans, [ids Te], [ids_(idx_Te30) 30]);
-% iqs_Te40 = subs(iqs_ans, [ids Te], [ids_(idx_Te40) 40]);
-
-% MFPT의 전력 구하기
+%% MFPT의 전력 구하기
 power_MFPT=[];
 www = [];
 
@@ -290,31 +254,6 @@ function [wrm, power] = get_power_by_idqs(x, y, w_eqn, t_eqn, P)
     power = wrm * tt;
 end
 
-% for i=1:size(MTPA_position(:,1),1)
-%     x = MTPA_position(i,1);
-%     y = MTPA_position(i,2);
-% 
-%     [wrm, power] = get_power_by_idqs(x, y, w_solution, rhs(Te_eqn), P);
-%     power_MFPT(end+1) = power;
-%     www(end+1) = wrm;
-% end
-% for i=st:en 
-%     x = xy_limit_circle(1,i);
-%     y = xy_limit_circle(2,i);
-% 
-%     [wrm, power] = get_power_by_idqs(x, y, w_solution, rhs(Te_eqn), P);
-%     power_MFPT(end+1) = power;
-%     www(end+1) = wrm;
-% end
-
-% for i=st_te30:en_te30 
-%     x = xy_Te30(1,i);
-%     y = xy_Te30(2,i);
-% 
-%     [wrm, power] = get_power_by_idqs(x, y, w_solution, rhs(Te_eqn), P);
-%     power_MFPT(end+1) = power;
-%     www(end+1) = wrm;
-% end
 
 for i=1:size(MFPT_position(:,1),1)
     x = MFPT_position(i,1);
@@ -330,23 +269,3 @@ title("전압제한타원과 전류제한원");
 set(gcf, 'Name', 'MTPA - limit Current Region - MFPT', 'NumberTitle', 'off');
 plot(www(1:end-2), power_MFPT(1:end-2), 'r.')
 axis([0 500 0 1000])
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%
-
-
-figure; hold on;
-set(gcf, 'Name', '토크 별 동작점의 이동에 따른 자속의 크기', 'NumberTitle', 'off');
-p1=plot(ids_, lambda_Te40_val, 'displayname', 'Te=40Nm');
-p2=plot(ids_, lambda_Te30_val, 'displayname', 'Te=30Nm');
-p3=plot(ids_, lambda_Te20_val, 'displayname', 'Te=20Nm');
-p4=plot(ids_, lambda_Te10_val, 'displayname', 'Te=10Nm');
-ylabel('|\lambda_{dqs}| [Wb]'), set(get(gca, 'YLabel'), 'Rotation', 0, 'VerticalAlignment', 'middle', 'HorizontalAlignment', 'right');
-xlabel("i_{ds} [A]");
-
-plot(ids_(idx_Te10), lambda_Te10_val(idx_Te10), 'ro')
-plot(ids_(idx_Te20), lambda_Te20_val(idx_Te20), 'ro')
-plot(ids_(idx_Te30), lambda_Te30_val(idx_Te30), 'ro')
-plot(ids_(idx_Te40), lambda_Te40_val(idx_Te40), 'ro')
-legend([p1 p2 p3 p4]);
-title("토크 별 동작점의 이동에 따른 자속의 크기")
