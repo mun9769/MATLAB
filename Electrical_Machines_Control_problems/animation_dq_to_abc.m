@@ -24,7 +24,8 @@ iter = 1000;
 
 for thetar=linspace(0, iter*2*pi, iter*629+1) % 2*pi에 628개
 
-    V_abc = inv( TT(thetar) ) * [Vd Vq 0]';
+    % V_abc = inv( TT(thetar) ) * [Vd Vq 0]';
+    V_abc = TT(thetar) \ [Vd Vq 0]';
     p1.XData(end+1) = cur;    p1.YData(end+1) = V_abc(1);
     p2.XData(end+1) = cur;    p2.YData(end+1) = V_abc(2);
     p3.XData(end+1) = cur;    p3.YData(end+1) = V_abc(3);
@@ -43,7 +44,7 @@ for thetar=linspace(0, iter*2*pi, iter*629+1) % 2*pi에 628개
         p3.XData = []; p3.YData = [];
     end
     % drawnow;
-    pause(0.01)
+    pause(0)
 end
 
 

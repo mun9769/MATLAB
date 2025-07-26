@@ -1,4 +1,5 @@
 clear; close all;
+
 syms Vsmax
 syms Lqs Lds Lamf 
 syms iqs ids w;
@@ -16,13 +17,8 @@ Vsmax = 60;
 Ismax = 8; % Arms
 eDiff = @(eqn) rhs(eqn) - lhs(eqn);
 
-w_eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2; % 우변이 lambda의 크기이다.??
+w_eqn = (Vsmax/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2; 
 Te_eqn = Te == (ids*iqs*(Lds - Lqs) + Lamf*iqs)*3/2*P; 
-
-% lambda = rhs(w_eqn);
-% iqs_ans = solve(Te_eqn, iqs);
-% kk = subs(lambda, iqs, iqs_ans) % 3/2*P를 빼면 배박논(5-7)식과 동일함.
-% my_latex(kk)
 
 w_solution = solve(w_eqn, w);
 w_solution = w_solution(2); % 임시방편.
@@ -34,8 +30,6 @@ Pout=[];
 
 if exist('data.mat', 'file')
     load('data.mat');
-    % save('data.mat', 'MTPA_position', '-append');
-    % save('data.mat', 'MFPT_position', '-append');
 else
     % MTPA 계산
     for te=1:40
@@ -50,6 +44,8 @@ else
         [x_mn, y_mn] = my_Lagrange_multiplier2(w_solution, eDiff(t_eqn), ids, iqs);
         MFPT_position(te,:) = [x_mn y_mn];
     end
+    save('data.mat', 'MTPA_position', '-append');
+    save('data.mat', 'MFPT_position', '-append');
 end
 
 to_rps = 2*pi/60;
@@ -88,26 +84,25 @@ idx = xy_limit_circle(:,1) > ids_lb & ...
 xy_const_torque{4} = xy_limit_circle(idx,:);
 
 
-% T=30Nm 곡선의 운전 영역.
+% T=30Nm 곡선의 운전 영역.
 ids_ub = my_near_point_x_nx2(xy_Te30, [ids_MTPA_30Nm iqs_MTPA_30Nm]);
 ids_lb = my_near_point_x_fxy_gxy(xy_Te30, MFPT_position);
 idx = xy_Te30(:,1) > ids_lb & xy_Te30(:,1) < ids_ub;
 
 xy_const_torque{3} = xy_Te30(idx,:);
 
-% T=20Nm 곡선의 운전 영역.
+% T=20Nm 곡선의 운전 영역.
 ids_ub = my_near_point_x_nx2(xy_Te20, [ids_MTPA_20Nm iqs_MTPA_20Nm]);
 ids_lb = my_near_point_x_fxy_gxy(xy_Te20, MFPT_position);
 idx = xy_Te20(:,1) > ids_lb & xy_Te20(:,1) < ids_ub;
 
 xy_const_torque{2} = xy_Te20(idx,:);
 
-% T=10Nm 곡선의 운전 영역.
+% T=10Nm 곡선의 운전 영역.
 ids_ub = my_near_point_x_nx2(xy_Te10, [ids_MTPA_10Nm iqs_MTPA_10Nm]);
 ids_lb = my_near_point_x_fxy_gxy(xy_Te10, MFPT_position);
 idx = xy_Te10(:,1) > ids_lb & xy_Te10(:,1) < ids_ub;
 xy_const_torque{1} = xy_Te10(idx,:);
-
 
 
 
@@ -119,7 +114,7 @@ hold on;
 
 
 title("IPMSM에서의 전압제한타원과 전류제한원(T_e^{*} = 30Nm)");
-set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
+set(gcf, 'Name', 'Voltage and Current limit Analysis', 'NumberTitle', 'off');
 xlabel('d-axis [A]'); ylabel('q-axis [A]')
 axis([-10 2 -6 6]*1.5);
 pbaspect([1 1 1])
@@ -161,7 +156,7 @@ text(-Lamf/Lds, -0.7, '$$(-\frac{\phi_f}{L_{ds}}, 0)$$', 'interpreter', 'latex')
 
 
 wrpm_val = 100:1:300;
-wr_val = wrpm_val * to_rps * (P/2);
+wr_val = wrpm_val * to_rps * P;
 aa = [xy_const_torque{3}; MFPT_position];
 
 
@@ -184,6 +179,7 @@ end
 for value=wr_val
     iqs_syms = solve( subs(w_eqn, w, value), iqs ) ;
     iqs_value = subs( iqs_syms(2), ids, ids_value);
+    iqs_value = double(iqs_value);
 
     [x, y] = my_near_point_x_fxy_gxy(aa, [ids_value; iqs_value]');
 
@@ -194,7 +190,7 @@ for value=wr_val
     refreshdata(f1);
     drawnow;
 
-    t2.String = ['$$' sprintf('w_{rpm} = %.0f', value * to_rpm / (P/2)) '\ RPM' '$$' '(~300 RPM)'];
+    t2.String = ['$$' sprintf('w_{rpm} = %.0f', value * to_rpm / P) '\ RPM' '$$' '(~300 RPM)'];
     % pause(0);
     if record == 1
     currFrame = getframe(fig);
