@@ -1,43 +1,38 @@
 close all;
+clear;
 R = 0.26;
 L=1.7e-3;
 J=2.52e-3;
 B=0;
 K=0.4078;
 
-Ki = 0;
+Ki = 0.5;
 Kp = 1;
 
 
 % 전달함수 정의
 s = tf('s'); 
 G = K / (L*J*s^2 + R*J*s + K^2);
+
 %%
-% Pole-Zero Plot 그리기
-figure;
-pzmap(G);
-title('Pole-Zero Plot');
-grid on;
-
-% 극점과 영점 출력
-poles = pole(G);
-zeros = zero(G);
-
-disp('Poles:');
-disp(poles);
+zeta = 0.707;
+wn = 2*pi*350;
+Ww = 60;
+out = sim('exercise2_1.slx');
+Wrm =     squeeze(out.logsout.get("Wrm").Values.Data );
+Wrm_Ref = squeeze(out.logsout.get("Wrm_Ref").Values.Data );
+%TL =      squeeze(out.logsout.get("TL").Values.Data );
 
 
-% 감쇠비 계산
-wn = sqrt(K^2 / (L*J));   % 자연진동수
-zeta = (R*J) / (2 * sqrt(K^2 * L * J)); % 감쇠비
+%%
+clear
+C = 1e-6;
+Kp=0.1;
+Ki=0.8;
+G = tf(1, [C 0]);
+Gc = tf([Kp Ki], [1 0]);
+T = feedback(G, Gc);
+margin(T);
 
-if zeta < 1 && zeta > 0
-    fprintf("under damping system")
-end
-
-%% 4. 시스템을 감쇠비를 바꿀 수 있는 방법과 각각의 장단점에 대해 논하시오.
-% 방법1) TL 증가 -> 감쇠비 감소
-% 방법2) 새로운 모터 제작 : 비쌈. 원하는 파라미터 생성 가능
-% 방법3) 컨트롤러로 보상제어.
-
-%% 5. 전압이 일정할 때 Load torque가 스텝 변화할 때 속도의 응답특성을 논하시오.
+%%
+title("0.1 + 0.8/s bode plot")
