@@ -19,6 +19,9 @@ assert(length(Idsr) == length(out.tout), 'length not validation');
 assert(length(Iqsr) == length(out.tout), 'length not validation');
 assert(length(Wr)   == length(out.tout), 'length not validation');
 
+
+
+
 hold on;
 p2 = plot(0, 0, 'mo', 'MarkerFaceColor', 'm');
 
