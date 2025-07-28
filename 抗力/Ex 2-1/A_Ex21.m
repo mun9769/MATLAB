@@ -4,7 +4,7 @@ clc
 clear
 close all
 format short eng
-
+global Vdc;
 %% RL load parameters
 
 R=1;
@@ -31,29 +31,14 @@ W=2*pi*200;          % Angular speed of output voltage
 
 %% Run Simulink
 
-    out=sim('Sim_Ex21.slx');
+out=sim('Sim_Ex21.slx');
 
+[fig, ha, Sabc, Vdqss_Ref, ta, ps] = my_set_sixstep_fig(logsout);
 
-
-test =       (logsout.get("test").Values.Data );
-tt = logsout.get("test").Values.Time;
-
-Sabc =       (logsout.get("Sabc").Values.Data );
-ta = logsout.get("Sabc").Values.Time;
-
-test_interpolate = interp1(tt,test, ta, 'previous');
-
-test_interpolate( isnan(test_interpolate) ) = 0;
-
-% plot(ta, test_interpolate);
-
-
-li = zeros(size(Sabc));
-for ii=1:length(Sabc)
-
-    li(ii) = Sabc(ii,1)*4 + Sabc(ii,2)*2 + Sabc(ii,1);
+for ii=1:length(ta)
+    
+    quiver(0, 0, Vdqss_Ref(ii,1), Vdqss_Ref(ii,2))
+    
+    ps(round(Sabc(ii))+1).MarkerFaceColor ='white';
+    pause(0.2);
 end
-
-plot(ta, li);
-
-
