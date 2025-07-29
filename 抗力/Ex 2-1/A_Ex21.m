@@ -33,12 +33,21 @@ W=2*pi*200;          % Angular speed of output voltage
 
 out=sim('Sim_Ex21.slx');
 
-[fig, ha, Sabc, Vdqss_Ref, ta, ps] = my_set_sixstep_fig(logsout);
+[fig, ha, Sabc, Vdqss_Ref, ta, ps, text] = my_set_sixstep_fig(logsout);
 
 for ii=1:length(ta)
     
-    quiver(0, 0, Vdqss_Ref(ii,1), Vdqss_Ref(ii,2))
+    quiver(0, 0, Vdqss_Ref(ii,1), Vdqss_Ref(ii,2)) % todo: quiver
+
+    cur = round(Sabc(ii));
+    if cur == 8 || cur == 0, cur = 7; end
+
     
-    ps(round(Sabc(ii))+1).MarkerFaceColor ='white';
+    ps{cur}.MarkerFaceColor ='white';
+    cur
     pause(0.2);
+    
+    if mod(ii, 1000) == 0
+        t1.String = [num2str(ii/100000) 's'];
+    end
 end
