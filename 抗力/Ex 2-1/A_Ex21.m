@@ -25,7 +25,7 @@ Ts=1/fs;        % Samping period
 
 Stop_Time=0.01;
 
-V=120;          % Amplitude of output voltage
+V=310/sqrt(3);          % Amplitude of output voltage
 W=2*pi*200;          % Angular speed of output voltage
 
 
@@ -33,21 +33,25 @@ W=2*pi*200;          % Angular speed of output voltage
 
 out=sim('Sim_Ex21.slx');
 
-[fig, ha, Sabc, Vdqss_Ref, ta, ps, text] = my_set_sixstep_fig(logsout);
+%%
+[fig, ha, Sabc, Vdqss_Ref, ta, ps, text, arrow] = my_set_sixstep_fig(logsout);
 
+
+prv = 1;
 for ii=1:length(ta)
     
-    quiver(0, 0, Vdqss_Ref(ii,1), Vdqss_Ref(ii,2)) % todo: quiver
+    arrow.UData = Vdqss_Ref(ii,1);
+    arrow.VData = Vdqss_Ref(ii,2);
 
-    cur = round(Sabc(ii));
-    if cur == 8 || cur == 0, cur = 7; end
+    cur = Sabc(ii,1);
+    if cur == 0, cur = 7; end
 
-    
-    ps{cur}.MarkerFaceColor ='white';
-    cur
-    pause(0.2);
-    
-    if mod(ii, 1000) == 0
-        t1.String = [num2str(ii/100000) 's'];
+    ps{prv}.MarkerFaceColor ='white';
+    ps{cur}.MarkerFaceColor ='red';
+
+    prv = cur;
+    if mod(ii, 10) == 0
+        t1.String = [num2str(ii/10) 's'];
     end
+        pause(0.05);
 end
