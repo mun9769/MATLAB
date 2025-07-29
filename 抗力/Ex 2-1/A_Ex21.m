@@ -14,18 +14,18 @@ L=1e-3;
 
 Vdc = 310;
 
-fsw=2500;       % Switching frequency
+fsw=10000;       % Switching frequency
 Tsw=1/fsw;      % Switching period
 
 fs=2*fsw;       % Samping frequency (double sampling)
-fs=5000;       % Samping frequency (double sampling)
+fs=10000;       % Samping frequency (double sampling)
 Ts=1/fs;        % Samping period
 
 %% Command setting
 
 Stop_Time=0.01;
 
-V=310/sqrt(3);          % Amplitude of output voltage
+V=310/1.5;          % Amplitude of output voltage
 W=2*pi*200;          % Angular speed of output voltage
 
 
@@ -34,10 +34,11 @@ W=2*pi*200;          % Angular speed of output voltage
 out=sim('Sim_Ex21.slx');
 
 %%
-[fig, ha, Sabc, Vdqss_Ref, ta, ps, text, arrow] = my_set_sixstep_fig(logsout);
+[Sabc, Vdqss_Ref, ta, tt] = my_param(logsout);
+[fig, ha, ps, text, arrow, pcur] = my_set_sixstep_fig(ta, Sabc);
 
 
-prv = 1;
+prv = 7;
 for ii=1:length(ta)
     
     arrow.UData = Vdqss_Ref(ii,1);
@@ -50,8 +51,10 @@ for ii=1:length(ta)
     ps{cur}.MarkerFaceColor ='red';
 
     prv = cur;
-    if mod(ii, 10) == 0
-        t1.String = [num2str(ii/10) 's'];
+    
+    if mod(ii, 50) == 0
+        text.String = [num2str(10*ii) 'us'];
     end
-        pause(0.05);
+    pcur.XData = ta(ii); pcur.YData = Sabc(ii,1);
+    pause(0.07);
 end
