@@ -26,11 +26,11 @@ arrow = quiver(ha, 0, 0, 0, 0); % todo: quiver
 ps = cell(1,7);
 
 ps{1}= plot(ha, vol(1,1), vol(1,2), 'ro', 'MarkerFaceColor','white');
-ps{2}= plot(ha, vol(3,1), vol(3,2), 'ro', 'MarkerFaceColor','white');
 ps{3}= plot(ha, vol(2,1), vol(2,2), 'ro', 'MarkerFaceColor','white');
-ps{4}= plot(ha, vol(6,1), vol(6,2), 'ro', 'MarkerFaceColor','white');
-ps{5}= plot(ha, vol(4,1), vol(4,2), 'ro', 'MarkerFaceColor','white');
-ps{6}= plot(ha, vol(5,1), vol(5,2), 'ro', 'MarkerFaceColor','white');
+ps{2}= plot(ha, vol(3,1), vol(3,2), 'ro', 'MarkerFaceColor','white');
+ps{6}= plot(ha, vol(4,1), vol(4,2), 'ro', 'MarkerFaceColor','white');
+ps{4}= plot(ha, vol(5,1), vol(5,2), 'ro', 'MarkerFaceColor','white');
+ps{5}= plot(ha, vol(6,1), vol(6,2), 'ro', 'MarkerFaceColor','white');
 ps{7}= plot(ha, 0, 0,'ro','markerfacecolor','white');
 
 
