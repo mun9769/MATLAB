@@ -1,5 +1,5 @@
 
-function [fig, ha, ps, text, q_Vdqss_ref, q_Vdqss, pcur] = my_set_sixstep_fig(ta, Sabc)
+function [fig, ha, ps, t_cnt, q_Vdqss_ref, q_Vdqss, p_cur, p_avg] = my_set_sixstep_fig(ta, Sabc)
 
 a = pi/3;
 %        1      2       3        4        5        6        7
@@ -16,8 +16,8 @@ pbaspect(ha, [1 1 1]);
 ha.Position = [0.0376    0.3214    0.5610    0.6148];
 plot(ha, vol(:,1), vol(:,2), 'k-');
 
-text = annotation(fig, 'textbox', [0.8    0.8143    0.10    0.05], ...
-    'String', '0.00 s', ...
+t_cnt = annotation(fig, 'textbox', [0.8    0.8143    0.15    0.05], ...
+    'String', '', ...
     'FontSize', 12, ...
     'FontWeight', 'bold');
 
@@ -26,6 +26,8 @@ q_Vdqss = quiver(ha, 0, 0, 0, 0);
 
 q_Vdqss_ref.Color = 'r';
 q_Vdqss.Color = 'b';
+
+p_avg = plot(ha, 0,0, 'ko','markersize',8, 'markerfacecolor', 'k');%,'color','g', 'markerfacecolor', 'g', 'displayname', 'average point');
 
 
 ps = cell(1,7);
@@ -44,7 +46,7 @@ hb = axes(fig);
 hb.Position = [30.5677e-003    33.8323e-003   919.2140e-003   205.5888e-003];
 hold(hb, 'on');
 plot(hb, ta, Sabc(:,1));
-pcur = plot(hb, 0, 0, 'b*');
+p_cur = plot(hb, 0, 0, 'b*');
 
 
 end
