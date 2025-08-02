@@ -21,7 +21,6 @@ to_rpm = 60/2/pi;
 w = 80 * to_rps * P;
 
 
-
 [fig, ha, hb] = my_set_sixstep_fig();
 
 

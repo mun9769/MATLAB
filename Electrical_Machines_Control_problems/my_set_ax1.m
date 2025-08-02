@@ -16,7 +16,7 @@ ylabel(ax1, 'V_q^r');
 ax1.Position = [0.0462    0.5399    0.4055    0.4193];
 
 t1 = title(ax1, '마우스로 좌표 클릭');
-p1 = plot(ax1, Vd, Vq, 'ro', 'MarkerSize', 8);
+p1 = plot(ax1, Vd, Vq, 'ro', 'MarkerSize', 8, 'markerfacecolor','r');
 
 
 

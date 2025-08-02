@@ -15,7 +15,7 @@ xlabel(ax2, 'V_d^e [10, 0]'); ylabel(ax2, 'V_q^e');
 ax2.Position = [0.0462    0.0399    0.4055    0.4193]; % ax1.YStart + 0.5
 % ax1.Position = [0.0462    0.5399    0.4055    0.4193];
 
-p22 = plot(ax2, Vd, Vq, 'ro', 'MarkerSize', 8);
+p22 = plot(ax2, Vd, Vq, 'ro', 'MarkerSize', 8, 'markerfacecolor','r');
 
 end
 
