@@ -1,5 +1,5 @@
 
-function [fig, ha, ps, t_cnt, q_Vdqss_ref, q_Vdqss, p_cur, p_avg] = my_set_sixstep_fig(ta, Sabc)
+function [fig, ha, ps, t_cnt, q_Vdqss_ref, p_cur, p_avg] = my_set_sixstep_fig(ta, Sabc)
 
 a = pi/3;
 %        1      2       3        4        5        6        7
@@ -21,11 +21,11 @@ t_cnt = annotation(fig, 'textbox', [0.8    0.8143    0.15    0.05], ...
     'FontSize', 12, ...
     'FontWeight', 'bold');
 
-q_Vdqss_ref = quiver(ha, 0, 0, 0, 0);
-q_Vdqss = quiver(ha, 0, 0, 0, 0);
+q_Vdqss_ref = annotation('arrow');
+set(q_Vdqss_ref, 'parent', ha, 'position', [0 0 0 0], ...
+    'headlength', 10, 'headwidth', 5, 'headstyle', 'cback1');
 
-q_Vdqss_ref.Color = 'r';
-q_Vdqss.Color = 'b';
+q_Vdqss_ref.Color = 'b';
 
 p_avg = plot(ha, 0,0, 'ko','markersize',8, 'markerfacecolor', 'k');%,'color','g', 'markerfacecolor', 'g', 'displayname', 'average point');
 
