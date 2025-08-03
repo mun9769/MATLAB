@@ -44,6 +44,7 @@ for thetar=linspace(0, iter*2*pi, iter*629+1) % 2*pi에 628개
         p3.XData = []; p3.YData = [];
     end
     % drawnow;
+    % saveas(gcf,['.\output\image' num2str(thetar) '.png']); % 사진으로 저장하기
     pause(0)
 end
 
