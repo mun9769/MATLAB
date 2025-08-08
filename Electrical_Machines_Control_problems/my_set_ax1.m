@@ -1,4 +1,4 @@
-function [a] = my_set_ax1(fig)
+function [p11, ax1] = my_set_ax1(fig)
 a=-1;
 global Vd Vq;
 ax1 = axes(fig);
@@ -16,12 +16,12 @@ ylabel(ax1, 'V_q^r');
 ax1.Position = [0.0462    0.5399    0.4055    0.4193];
 
 t1 = title(ax1, '마우스로 좌표 클릭');
-p1 = plot(ax1, Vd, Vq, 'ro', 'MarkerSize', 8, 'markerfacecolor','r');
+p11 = plot(ax1, Vd, Vq, 'ro', 'MarkerSize', 8, 'markerfacecolor','r');
 
 
 
 % 마우스 클릭 이벤트 설정
-set(ax1, 'ButtonDownFcn', @(src,event) onClick(ax1, p1));
+set(ax1, 'ButtonDownFcn', @(src,event) onClick(ax1, p11));
 end
 
 

@@ -1,5 +1,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/matlab
 # Edit at https://www.toptal.com/developers/gitignore?templates=matlab
+*.mp4
 tt.m
 test.m
 Examples/**
