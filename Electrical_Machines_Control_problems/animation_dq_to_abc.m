@@ -16,6 +16,21 @@ fig = figure;
 [p1, p2, p3] = my_set_ax3(fig);
 
 
+theta = linspace(0,8*pi, 629);
+idx = 1
+for ii=theta
+    VV = TT(ii) \ [Vd Vq 0]';
+    V_abc(idx,:) = VV;
+    idx = idx + 1;
+end
+
+p1.XData = theta; p2.XData = theta; p3.XData = theta;
+p1.YData = V_abc(:,1);
+p2.YData = V_abc(:,2);
+p3.YData = V_abc(:,3);
+
+%%
+
 dtheta=1e-2;
 cur = 0;
 
