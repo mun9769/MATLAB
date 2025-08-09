@@ -119,7 +119,7 @@ classdef spmsm_1 < handle
     end
 
     properties (Dependent=true)
-        
+
         % dependent geometrical variables
         alpha_s; % stator slot pitch angle: 2*pi/Ns;
         alpha_p; % pole pitch angle: 2*pi/p;
@@ -139,7 +139,7 @@ classdef spmsm_1 < handle
         Sin; % rated input volt-ampere [kW]
 
         fs; % supply freq
-        Vt = % line-to-line terminal voltage
+        Vt;% line-to-line terminal voltage
         It; % line terminal current [A]
         Vph; % phase voltage
         Iph;
@@ -192,7 +192,7 @@ classdef spmsm_1 < handle
                 obj.connection = aa;
             else
                 error('stator winding connection must be "star" or "delta"');
-            
+
             end
         end
 
@@ -242,33 +242,84 @@ classdef spmsm_1 < handle
         end
 
 
-% *******************************************************
-function updateSTatorModel(obj)
-    x1=(obj.ISD/2) * cos(obj.gamma_so/2);
-    y1=(obj.ISD/2) * sin(obj.gamma_so/2);
+        % *******************************************************
+        function updateStatorModel(obj)
+            x1=(obj.ISD/2) * cos(obj.gamma_so/2);
+            y1=(obj.ISD/2) * sin(obj.gamma_so/2);
 
-    u = [x1, y1];
-    u = u/norm(u);
+            u = [x1, y1];
+            u = u/norm(u);
 
-    x2 = x1 + obj.hs0 * u(1);
-    y2 = y1 + obj.hs0 * u(2);
+            x2 = x1 + obj.hs0 * u(1);
+            y2 = y1 + obj.hs0 * u(2);
 
-    [ux, uy] = rotate_pts(u(1), u(2), pi/2-obj.stta*pi/180);
-    u1 = [ux, uy];
+            [ux, uy] = rotate_pts(u(1), u(2), pi/2-obj.stta*pi/180);
+            u1 = [ux, uy];
 
-    u2 = [cos(obj.alpha_s/2), sin(obj.alpha_s/2)];
+            u2 = [cos(obj.alpha_s/2), sin(obj.alpha_s/2)];
 
-    [x3, y3] = get
+        end
 
 
 
-function updateModel(obj)
-    obj.updateStatorModel;
-    obj.updateRotorModel;
-    obj.updateWindingPattern;
-end
-        
+        function updateModel(obj)
+            obj.updateStatorModel;
+            obj.updateRotorModel;
+            obj.updateWindingPattern;
+        end
+
 
     end
 
+    methods
+        function plotSketch(obj)
+            hold on;
+            axis off equal;
+
+
+            x1=(obj.ISD/2) * cos(obj.gamma_so/2);
+            y1=(obj.ISD/2) * sin(obj.gamma_so/2);
+
+            u = [x1, y1];
+            u = u/norm(u);
+
+            x2 = x1 + obj.hs0 * u(1);
+            y2 = y1 + obj.hs0 * u(2);
+
+            [ux, uy] = rotate_pts(u(1), u(2), pi/2-obj.stta*pi/180);
+            u1 = [ux, uy];
+
+            u2 = [cos(obj.alpha_s/2), sin(obj.alpha_s/2)];
+
+            [x3, y3] = getLineLineIntersection([0, -obj.wst*0.5/cos(obj.alpha_s/2)], u2, [x2,y2],u1);
+            
+            tmp_angle = 2*asin(obj.wst/(obj.ISD+2*obj.dss));
+
+            [x4, y4] = rotate_pts(obj.ISD/2 + obj.dss, 0, obj.alpha_s/2-tmp_angle/2);
+
+            obj.x_spts = [x1 x2 x3 x4];
+            obj.y_spts = [y1 y2 y3 y4];
+
+            
+
+            t = linspace(0, atan2(y4,x4) ,20);
+            x=(obj.ISD/2 + obj.dss) * cos(t);
+            y=(obj.ISD/2 + obj.dss) * sin(t);
+            x=[x,x3,x2];
+            y=[y,y3,y2];
+
+            t = linspace(atan2(y1,x1), 0, 10);
+            x= [x, (obj.ISD/2) * cos(t)];
+            y= [y, (obj.ISD/2) * sin(t)];
+            obj.ssArea = 2*polyarea(x,y);
+
+            % ******************
+            % calculation of the stator lamination area and mass
+            obj.slArea = pi*obj.OSD^2/4 - pi*obj.ISD^2/4 - obj.Ns * obj.ssArea;
+            obj.KgStator = 1e-9 * obj.Lstk * obj.slArea * obj.rhom_core;
+
+            plot(obj.x_spts, obj.y_spts, 'r','linewidth',1.4);
+            plot(x,y, 'b');
+        end
+    end
 end
