@@ -1,3 +1,5 @@
-a = spmsm_1();
+a = synrm_1();
+
+close
 
 a.plotSketch()
