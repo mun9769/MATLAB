@@ -13,8 +13,8 @@ plot(ax1, li(:,1), li(:,2), 'k-');
 pbaspect(ax1, [1 1 1]); grid(ax1, 'on'); hold(ax1, 'on');
 xlabel(ax1, sprintf('V_d^r [%.1f %.1f]', Vd, Vq)); 
 ylabel(ax1, 'V_q^r');
-ax1.Position = [0.0462    0.5399    0.4055    0.4193];
-
+%ax1.Position = [0.0462    0.5399    0.4055    0.4193];
+ax1.Position = [    0.0657    0.3158    0.5637    0.6439];
 t1 = title(ax1, '마우스로 좌표 클릭');
 p11 = plot(ax1, Vd, Vq, 'ro', 'MarkerSize', 8, 'markerfacecolor','r');
 
