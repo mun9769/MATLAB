@@ -1,6 +1,13 @@
 clear all;
 close all;
 clc;
+rad2deg = 180/pi;
+
+mm = 2; % 1. 속도+전류 제어 2. 전류제어
+
+Mode = 2; % 2: sensorless
+w_h = 2*pi*800;
+V_inj = 60;
 
 Stop_Time = 10;
 J = 0.045;

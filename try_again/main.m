@@ -2,22 +2,6 @@ clear all;
 close all;
 clc;
 
-% 제한사항
-% 1. 인버터 없이. 
-% 2. Lds, Lqs는 상수. 
-
-% saturation 넣어야? 
-% 이상적인 전류 센싱 
-% 디지털 제어는 없음. 
-
-% theta_r_tilde가 90도가 안된다고 가정. sin(2*theta_r_tilde) = 0이 되도록하는 것.
-
-Mode = 1; % 1: speed feedback, 2: sensorless
-
-V_inj = 60;
-w_h = 2*pi*1000;
-rad2deg = 180/pi;
-
 Stop_Time = 10;
 J = 0.045;
 B=0.0001;
@@ -52,12 +36,5 @@ Kas=1/Kps;
 
 Vsmax = 60;
 
-
-
-%%
-
-G = tf([1 0], [1 w_h]);
-
-margin(G)
 
 
