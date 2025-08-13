@@ -1,15 +1,15 @@
-function [p1, p2, p3] = my_set_ax3(fig)
+function [p1, p2, p3] = plot_ax3_Vabc(fig)
 
 
 ax3_1 = axes(fig);
-ax3_1.Position = [0.4409+0.25    0.7719    0.2572    0.1855];
+ax3_1.Position = [0.4409    0.7719    0.5072    0.1855];
 ax3_2 = axes(fig);
-ax3_2.Position = [0.4409+0.25    0.4719    0.2572    0.1855];
+ax3_2.Position = [0.4409    0.4719    0.5072    0.1855];
 ax3_3 = axes(fig);
-ax3_3.Position = [0.4409+0.25    0.1719    0.2572    0.1855];
+ax3_3.Position = [0.4409    0.1719    0.5072    0.1855];
 
 
-xlim = 4*pi; ylim = 10;
+xlim = 8*pi; ylim = 10;
 title(ax3_1, 'V_a');
 title(ax3_2, 'V_b');
 title(ax3_3, 'V_c');

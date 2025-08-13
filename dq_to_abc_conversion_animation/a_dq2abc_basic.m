@@ -3,7 +3,7 @@ syms theta_r;
 
 a = 2*pi/3;
 global Vd Vq;
-Vd = 10/sqrt(3); Vq = 0;
+Vd = 15/sqrt(3); Vq = 0;
 
 TT = @(theta) ...
     [cos(theta)  cos(theta-a)  cos(theta+a);
@@ -12,9 +12,9 @@ TT = @(theta) ...
 
 fig = figure;
 
-[p11, ax1] = my_set_ax1(fig);
-[p22] = my_set_ax2(fig);
-[p1, p2, p3] = my_set_ax3(fig);
+[p11, ax1] = plot_ax1_Vdqse(fig);
+[p22] = plot_ax2_Vdqss(fig);
+[p1, p2, p3] = plot_ax3_Vabc(fig);
 
 
 dtheta=1e-2;
@@ -22,9 +22,8 @@ cur = 0;
 
 iter = 1000;
 
-for thetar=linspace(0, iter*2*pi, iter*629+1) % 2*pi에 628개
+for thetar=linspace(0, iter*2*pi, iter*629+1)
 
-    % V_abc = inv( TT(thetar) ) * [Vd Vq 0]';
     V_abc = TT(thetar) \ [Vd Vq 0]';
     p1.XData(end+1) = cur;    p1.YData(end+1) = V_abc(1);
     p2.XData(end+1) = cur;    p2.YData(end+1) = V_abc(2);

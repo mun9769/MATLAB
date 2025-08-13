@@ -1,23 +1,20 @@
-function [p11, ax1] = my_set_ax1(fig)
-a=-1;
+function [p11, ax1] = plot_ax1_Vdqse(fig)
 global Vd Vq;
 ax1 = axes(fig);
 
-li = zeros(7,2);
-for i=1:7
-    li(i,1) = 10 * cos(i*pi/3);
-    li(i,2) = 10 * sin(i*pi/3);
-end
-plot(ax1, li(:,1), li(:,2), 'k-');
+
+tmp = linspace(0,2*pi,50);
+Vs = 15/sqrt(3);
+
+plot(Vs*cos(tmp), Vs*sin(tmp), 'k-');
+
 
 pbaspect(ax1, [1 1 1]); grid(ax1, 'on'); hold(ax1, 'on');
 xlabel(ax1, sprintf('V_d^r [%.1f %.1f]', Vd, Vq)); 
 ylabel(ax1, 'V_q^r');
-%ax1.Position = [0.0462    0.5399    0.4055    0.4193];
-ax1.Position = [    0.0657    0.3158    0.5637    0.6439];
+ax1.Position = [0.0462    0.5399    0.4055    0.4193];
 t1 = title(ax1, '마우스로 좌표 클릭');
 p11 = plot(ax1, Vd, Vq, 'ro', 'MarkerSize', 8, 'markerfacecolor','r');
-
 
 
 % 마우스 클릭 이벤트 설정

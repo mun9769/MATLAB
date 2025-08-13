@@ -1,4 +1,4 @@
-function [p22] = my_set_ax2(fig)
+function [p22] = plot_ax2_Vdqss(fig)
 global Vd Vq;
 ax2 = axes(fig);
 
