@@ -5,12 +5,14 @@ clc;
 % 제한사항
 % 1. 인버터 없이. 
 % 2. Lds, Lqs는 상수. 
-% 다이얼로 I 지령 바꾸기 
+
 % saturation 넣어야? 
 % 이상적인 전류 센싱 
 % 디지털 제어는 없음. 
-% 논문의 파라미터 사용하기 40V 550hz 
+
 % theta_r_tilde가 90도가 안된다고 가정. sin(2*theta_r_tilde) = 0이 되도록하는 것.
+
+Mode = 1; % 1: speed feedback, 2: sensorless
 
 V_inj = 60;
 w_h = 2*pi*1000;
