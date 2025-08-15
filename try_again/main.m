@@ -50,6 +50,15 @@ Kas=1/Kps;
 
 Vsmax = 60;
 
-%%
+
 init_Thetar = 0;
-init_Thetar_tilde = -3*pi/7;
+init_Thetar_tilde = -pi;
+
+%%
+zeta = 1.4;
+
+G = tf([2*zeta*w_h 0], [1 2*zeta*w_h w_h^2]);
+
+margin(G);
+
+
