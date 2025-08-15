@@ -14,8 +14,8 @@ rad2deg = 180/pi;
 mm = 2; % 1. 속도+전류 제어 2. 전류제어
 Mode = 2; % 2: sensorless
 
-w_h = 2*pi*3000;
-V_inj = 10;
+w_h = 2*pi*800;
+V_inj = 35;
 Stop_Time = 10;
 J = 0.045;
 B=0.0001;
@@ -23,8 +23,8 @@ TL=20;
 
 P = 24;
 Rs=2;
-Lds = 30.0e-3; %[H] 
-Lqs = 40.0e-3; %[H]
+Lds = 40.0e-3; %[H] 
+Lqs = 20.0e-3; %[H]
 Lamf = 0.12; %[Wb]
 
 Wrpm_rated = 400;
@@ -51,11 +51,19 @@ Kas=1/Kps;
 Vsmax = 60;
 
 
-init_Thetar = 2*pi/7;
+init_Thetar = 2*pi/7; % theta_r_tilde가 pi/2 넘어가면은 진짜 오류 발생함.
 
-Thetar_hat_init = pi;
+Thetar_hat_init = pi/2; 
 
-zeta = 0.8;
+wait_time = 0.0;
+
+zeta = 1.2;
+
+%%
+G = tf([2*zeta*w_h 0 ], [1 2*zeta*w_h w_h^2]);
+nn = w_h * 10;
+G = tf([w_h^2], [1 2*zeta*w_h w_h^2]);
+bode(G)
 %%
 out = sim('try_again_agin');
 
