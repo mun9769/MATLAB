@@ -2,6 +2,20 @@ clear all;
 close all;
 clc;
 
+rad2deg = 180/pi;
+
+% 제한사항
+% 1. 인버터 안사용
+% 2. Ld, Lq는 일정
+% 3. 디지털 제어 안함
+% 4. 이상적 전류 센싱.
+
+
+mm = 2; % 1. 속도+전류 제어 2. 전류제어
+Mode = 2; % 2: sensorless
+
+w_h = 2*pi*800;
+V_inj = 60;
 Stop_Time = 10;
 J = 0.045;
 B=0.0001;
