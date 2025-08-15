@@ -52,13 +52,14 @@ Vsmax = 60;
 
 
 init_Thetar = 0;
-init_Thetar_tilde = -pi;
+init_Thetar_tilde = 0;
+init_Thetar_hat = 2*pi;
 
-%%
 zeta = 1.4;
-
+%%
 G = tf([2*zeta*w_h 0], [1 2*zeta*w_h w_h^2]);
 
 margin(G);
 
 
+Stop_Time = 0.000001
