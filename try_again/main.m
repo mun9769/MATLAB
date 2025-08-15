@@ -51,9 +51,9 @@ Kas=1/Kps;
 Vsmax = 60;
 
 
-init_Thetar = 0;
-init_Thetar_tilde = 0;
-init_Thetar_hat = 2*pi;
+init_Thetar = 3*pi/7;
+
+Thetar_hat_init = 0;
 
 zeta = 1.4;
 %%
