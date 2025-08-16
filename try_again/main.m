@@ -21,10 +21,10 @@ J = 0.045;
 B=0.0001;
 TL=20;
 
-P = 24;
+P = 8;
 Rs=2;
-Lds = 40.0e-3; %[H] 
-Lqs = 20.0e-3; %[H]
+Lds = 30.0e-3; %[H] 
+Lqs = 40.0e-3; %[H]
 Lamf = 0.12; %[Wb]
 
 Wrpm_rated = 400;
@@ -51,49 +51,39 @@ Kas=1/Kps;
 Vsmax = 60;
 
 
-init_Thetar = 2*pi/7; % theta_r_tilde가 pi/2 넘어가면은 진짜 오류 발생함.
+init_Thetar = 50 *(pi/180); % theta_r_tilde가 pi/2 넘어가면은 진짜 오류 발생함.
 
-Thetar_hat_init = pi/2; 
+Thetar_hat_init = 0;%3*pi/7; 
 
 wait_time = 0.0;
 
 zeta = 1.2;
-
+K=2.6;
 %%
-G = tf([2*zeta*w_h 0 ], [1 2*zeta*w_h w_h^2]);
-nn = w_h * 10;
-G = tf([w_h^2], [1 2*zeta*w_h w_h^2]);
-bode(G)
-%%
-out = sim('try_again_agin');
+vv = 0;
+for ii = 2.00:0.01:2.8
+    out = sim('try_again_agin');
+    K = ii;
 
-Theta_rhat   =  squeeze (out.logsout.get("Theta_rhat").Values.Data );
-Thetar_tilde =  squeeze( out.logsout.get("Thetar_tilde").Values.Data );
+    Theta_rhat   =  squeeze (out.logsout.get("Theta_rhat").Values.Data );
+    Thetar   =  squeeze (out.logsout.get("Thetar").Values.Data );
 
-tt = out.tout;
+    Theta_rhat = Theta_rhat(end/2:end);
+    Thetar = Thetar(end/2:end);
+    
+    Thetar = Thetar+180;
+    Theta_rhat = Theta_rhat + 180;
+    diff = abs( Thetar - Theta_rhat );
+    diff = min(diff, 360 - diff);
 
-figure; hold on;
-index = 1:20;
-plot(tt(index), Theta_rhat(index), 'ro');
+    vv = all(diff < 10);
+    ii
+    if vv == 1
+        disp("found: " + num2str(ii));
+        my_sound()
+        break
+    end
+        
+    
 
-plot(tt(index), Thetar_tilde(index), 'bo');
-
-
-for ii=2:size(tt, 1)
-    assert(Theta_rhat(ii) == Theta_rhat(ii-1) + Thetar_tilde(ii), "hawing");
-    Theta_rhat(ii)
 end
-
-sum = 0;
-for ii=2:size(tt,1)
-    sum = sum + Thetar_tilde(ii);
-end
-
-sum
-
-%%
-G = tf([1 0], [1 w_h/10]);
-
-
-
-margin(G)
