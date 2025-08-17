@@ -59,31 +59,3 @@ wait_time = 0.0;
 
 zeta = 1.2;
 K=2.6;
-%%
-vv = 0;
-for ii = 2.00:0.01:2.8
-    out = sim('try_again_agin');
-    K = ii;
-
-    Theta_rhat   =  squeeze (out.logsout.get("Theta_rhat").Values.Data );
-    Thetar   =  squeeze (out.logsout.get("Thetar").Values.Data );
-
-    Theta_rhat = Theta_rhat(end/2:end);
-    Thetar = Thetar(end/2:end);
-    
-    Thetar = Thetar+180;
-    Theta_rhat = Theta_rhat + 180;
-    diff = abs( Thetar - Theta_rhat );
-    diff = min(diff, 360 - diff);
-
-    vv = all(diff < 10);
-    ii
-    if vv == 1
-        disp("found: " + num2str(ii));
-        my_sound()
-        break
-    end
-        
-    
-
-end
