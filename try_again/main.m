@@ -51,11 +51,21 @@ Kas=1/Kps;
 Vsmax = 60;
 
 
-init_Thetar = 50 *(pi/180); % theta_r_tilde가 pi/2 넘어가면은 진짜 오류 발생함.
+init_Thetar = 30 *(pi/180); % theta_r_tilde가 pi/2 넘어가면은 진짜 오류 발생함.
 
 Thetar_hat_init = 0;%3*pi/7; 
 
 wait_time = 0.0;
 
-zeta = 1.2;
-K=2.6;
+zeta = 0.8;
+K=1/2.6 /w_h;
+
+
+if 1
+    w_h = 2*pi*800;
+    K = 1/2.6/w_h;
+else
+    w_h = 2*pi*3000;
+    K = 1/2.6;
+end
+    
