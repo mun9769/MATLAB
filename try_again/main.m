@@ -14,7 +14,6 @@ rad2deg = 180/pi;
 mm = 2; % 1. 속도+전류 제어 2. 전류제어
 Mode = 2; % 2: sensorless
 
-w_h = 2*pi*800;
 V_inj = 35;
 Stop_Time = 10;
 J = 0.045;
@@ -51,21 +50,22 @@ Kas=1/Kps;
 Vsmax = 60;
 
 
-init_Thetar = 30 *(pi/180); % theta_r_tilde가 pi/2 넘어가면은 진짜 오류 발생함.
+init_Thetar = 20 *(pi/180); % theta_r_tilde가 pi/2 넘어가면은 진짜 오류 발생함.
 
 Thetar_hat_init = 0;%3*pi/7; 
 
 wait_time = 0.0;
 
 zeta = 0.8;
-K=1/2.6 /w_h;
 
-
-if 1
+if 0
     w_h = 2*pi*800;
-    K = 1/2.6/w_h;
+    K = 2.1; % 2.6;
+    step_time = 1e-4;
+
+out = sim('try_again_agin');
 else
-    w_h = 2*pi*3000;
-    K = 1/2.6;
+    w_h = 2*pi*5000; % 전향보상하니까 훨씬 좋네
+    K = 2.6;    
+out = sim('sensorless_by_torque');
 end
-    
