@@ -5,7 +5,7 @@ clear
 close all
 format short eng
 
-%% Simulation mode
+% Simulation mode
 
 Mode.PWM=1;         % PWM method
 % 1: SCPWM, 2: 60deg DPWM, 3: 120deg(on) DPWM, 4: 120deg(off) DPWM
@@ -14,7 +14,7 @@ Mode.CC_Type=2;     % Current controller type
 Mode.AntiWindup=1;  % Anti-windup
 % 0: Off, 1: On
 
-%% Machine parameters
+% Machine parameters
 
 p=3;                        % # of pole pairs
 Lamf=0.254;
@@ -26,7 +26,7 @@ Is_Rated=39.5*sqrt(2);      % Peak Value
 Jm=0.01;
 Bm=.018;
 
-%% System parameters
+% System parameters
 
 Vdc = 310;
 
@@ -36,7 +36,7 @@ Tsw=1/fsw;      % Switching period
 fs=2*fsw;       % Samping frequency (double sampling)
 Ts=1/fs;        % Samping period
 
-%% Estimated parameters
+% Estimated parameters
 
 Lamf_Hat=1.0*Lamf;
 Rs_Hat=1.0*Rs;
@@ -45,7 +45,7 @@ Lqs_Hat=1.0*Lqs;
 Jm_Hat=1.0*Jm;
 Bm_Hat=1.0*Bm;
 
-%% Controller setting
+% Controller setting
 
 SpdObs.Wn=100*2*pi;         % Speed observer Imag pole
 SpdObs.Zeta=1;
@@ -63,7 +63,7 @@ CC.Kp_Mat=CC.Wc*[Lds_Hat 0;0 Lqs_Hat];
 CC.Ki_Mat=CC.Wc*(Rs_Hat+CC.Ra)*eye(2);
 CC.Ka_Mat=inv(CC.Kp_Mat);
 
-%% Command setting
+% Command setting
 
 Thetarm_Init=0*pi*1/p;
 
@@ -75,7 +75,7 @@ Idqsr_Ref_Set=[0 -5;0 50];
 Step_Time=0.01;
 Stop_Time=0.04;
 
-%% Run Simulink
+% Run Simulink
 
 sim('Sim_Ex23.slx')
 
