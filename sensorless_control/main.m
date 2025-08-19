@@ -58,14 +58,14 @@ wait_time = 0.0;
 
 zeta = 0.8;
 
-if 0
+if 1
     w_h = 2*pi*800;
     K = 2.1; % 2.6;
     step_time = 1e-4;
 
-out = sim('try_again_agin');
+    out = sim('sensorless_by_estimated_rotate');
 else
     w_h = 2*pi*5000; % 전향보상하니까 훨씬 좋네
     K = 2.6;    
-out = sim('sensorless_by_torque');
+    out = sim('sensorless_by_torque');
 end
