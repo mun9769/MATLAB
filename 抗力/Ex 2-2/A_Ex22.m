@@ -60,3 +60,8 @@ for ii=5:length(tt)-1
     prv = cur;
     pause(0.1);
 end
+
+%%
+for i=1:size(tt,1)-1
+    tt(i+1) - tt(i)
+end

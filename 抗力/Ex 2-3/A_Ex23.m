@@ -79,3 +79,31 @@ Stop_Time=0.04;
 
 sim('Sim_Ex23.slx')
 
+
+
+%%
+[Sabc, Vdqss_Ref, Vdqss, ta, tt, Vdqss_Ref_of] = my_param(logsout);
+[fig, ha, ps, t_cnt, q_Vdqss_ref, q_Vdqss_ref_of, p_cur, p_avg, q_diff] = my_set_sixstep_fig(ta, Sabc,Vdc);
+
+prv = 7;
+st = 1;
+
+% 사실
+for ii=5:length(tt)-1
+    q_Vdqss_ref.Position = [0 0 Vdqss_Ref(ii,:)];
+    q_Vdqss_ref_of.Position = [0 0 Vdqss_Ref_of(ii,:)];
+    
+    diff = Vdqss_Ref_of(ii,:) - Vdqss_Ref(ii,:);
+    q_diff.Position = [Vdqss_Ref(ii,:) diff];
+
+    cur = Sabc(ii,1); if cur == 0, cur = 7; end
+
+    ps{prv}.MarkerFaceColor ='white';
+    ps{cur}.MarkerFaceColor ='red';
+    p_cur.XData = ta(ii); p_cur.YData = Sabc(ii,1);
+
+    t_cnt.String = ['n: ' num2str(ii)];
+
+    prv = cur;
+    pause(0.1);
+end
