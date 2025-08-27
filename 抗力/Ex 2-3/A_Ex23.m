@@ -1,95 +1,44 @@
 %% Initialization
 
-clc
-clear
-close all
-format short eng
-
-% Simulation mode
-
-Mode.PWM=1;         % PWM method
-% 1: SCPWM, 2: 60deg DPWM, 3: 120deg(on) DPWM, 4: 120deg(off) DPWM
-Mode.CC_Type=2;     % Current controller type
-% 1: State feedback, 2: Complex vector
-Mode.AntiWindup=1;  % Anti-windup
-% 0: Off, 1: On
-
-% Machine parameters
-
-p=3;                        % # of pole pairs
-Lamf=0.254;
-Lds=3.6e-3;
-Lqs=4.3e-3;
-Rs=0.15;
-Is_Rated=39.5*sqrt(2);      % Peak Value
-
-Jm=0.01;
-Bm=.018;
-
-% System parameters
-
-Vdc = 310;
-
-fsw=10e3;       % Switching frequency
-Tsw=1/fsw;      % Switching period
-
-fs=2*fsw;       % Samping frequency (double sampling)
-Ts=1/fs;        % Samping period
-
-% Estimated parameters
-
-Lamf_Hat=1.0*Lamf;
-Rs_Hat=1.0*Rs;
-Lds_Hat=1.0*Lds;
-Lqs_Hat=1.0*Lqs;
-Jm_Hat=1.0*Jm;
-Bm_Hat=1.0*Bm;
-
-% Controller setting
-
-SpdObs.Wn=100*2*pi;         % Speed observer Imag pole
-SpdObs.Zeta=1;
-SpdObs.P=-1.3*SpdObs.Wn;    % Speed observer real pole
-
-SpdObs.L1=2*SpdObs.Zeta*SpdObs.Wn-SpdObs.P-Bm_Hat/Jm_Hat;
-SpdObs.L2=SpdObs.Wn^2-2*SpdObs.Zeta*SpdObs.Wn*SpdObs.P-SpdObs.L1*Bm_Hat/Jm_Hat;
-SpdObs.L3=-SpdObs.Wn^2*SpdObs.P;
-
-CC.Wc=500*2*pi;             % Current controller BW
-CC.Is_lim=Is_Rated;         % Current constraint
-CC.Ra=10*Rs_Hat;            % Active damping
-
-CC.Kp_Mat=CC.Wc*[Lds_Hat 0;0 Lqs_Hat];
-CC.Ki_Mat=CC.Wc*(Rs_Hat+CC.Ra)*eye(2);
-CC.Ka_Mat=inv(CC.Kp_Mat);
-
-% Command setting
-
-Thetarm_Init=0*pi*1/p;
-
-Wrm_Init=1700*2*pi/60;
-Wrm_Fin=1700*2*pi/60;
-
-Idqsr_Ref_Set=[0 -5;0 50];
-
-Step_Time=0.01;
-Stop_Time=0.04;
+to_rps = 2*pi/60;
+to_rpm = 60/2/pi;
 
 % Run Simulink
-
+[p_current, Mode, p, Lamf, Lds, Lqs, Rs, Is_Rated, Jm, Bm, Vdc, fsw, Tsw, fs, Ts, Lamf_Hat, Rs_Hat, Lds_Hat, Lqs_Hat, Jm_Hat, Bm_Hat, SpdObs, CC, Thetarm_Init, Wrm_Init, Wrm_Fin, Idqsr_Ref_Set, Step_Time, Stop_Time, f1, t2, w_eqn] = f1_param();
+% todo: structure binding
 sim('Sim_Ex23.slx')
 
 
 
 %%
-[Sabc, Vdqss_Ref, Vdqss, ta, tt, Vdqss_Ref_of] = my_param(logsout);
-[fig, ha, ps, t_cnt, q_Vdqss_ref, q_Vdqss_ref_of, p_cur, p_avg, q_diff] = my_set_sixstep_fig(ta, Sabc,Vdc);
+[Sabc, Vdqss_Ref, Vdqss, time_Sabc, time_Vdqss_Ref, Idqsr, Wr, time_Wr] = my_param(logsout);
+
+%%
+syms w ids iqs
+for i = 2400:length(Wr) 
+    value = Wr(i); % Wr가 작아서 전압제한타원이 안보임
+    aa = subs(w_eqn, w, value);
+    f1.Function = subs(w_eqn, w, value);
+    refreshdata(f1);
+    p_current.XData = Idqsr(i,1); p_current.YData = Idqsr(i,2);
+    drawnow;
+
+    t2.String = ['$$' sprintf('w_{rpm} = %.0f', value * to_rpm / p) '\ RPM' '$$'];
+    pause(0); % todo: 시간간격을 맞춰야 보기 좋음.
+    i
+end
+
+
+%%
+
+
+[fig, ha, ps, t_cnt, q_Vdqss_ref, q_Vdqss_ref_of, p_cur, p_avg, q_diff] = my_set_sixstep_fig(time_Sabc, Sabc,Vdc);
 
 prv = 7;
 st = 1;
 
 % 사실
-for ii=5:length(tt)-1
+for ii=5:length(time_Vdqss_Ref)-1
     q_Vdqss_ref.Position = [0 0 Vdqss_Ref(ii,:)];
     q_Vdqss_ref_of.Position = [0 0 Vdqss_Ref_of(ii,:)];
     
@@ -100,7 +49,7 @@ for ii=5:length(tt)-1
 
     ps{prv}.MarkerFaceColor ='white';
     ps{cur}.MarkerFaceColor ='red';
-    p_cur.XData = ta(ii); p_cur.YData = Sabc(ii,1);
+    p_cur.XData = time_Sabc(ii); p_cur.YData = Sabc(ii,1);
 
     t_cnt.String = ['n: ' num2str(ii)];
 
