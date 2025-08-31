@@ -1,4 +1,4 @@
-function [w_eqn, p_current, f1, t2] = f2_plot(Vdc, Lamf, Lds, Lqs, p, Is_Rated)
+function [w_eqn, p_current, f1, t2] = f2_plot(Vdc, Lamf, Lds, Lqs, p, Is_Rated, MTPA)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -10,7 +10,7 @@ eDiff = @(eqn) rhs(eqn) - lhs(eqn);
 
 w_eqn = (Vdc/w)^2 == (Lamf+Lds*ids)^2 + (Lqs*iqs)^2; 
 Te_eqn = Te == (ids*iqs*(Lds - Lqs) + Lamf*iqs)*3/2*p; 
-
+eqn_Te = cell(1,4);
 
 % 전류 제한원
 eqn_Te10 = subs(Te_eqn, Te, 10);
@@ -28,6 +28,12 @@ xy_Te30 = my_eqn_to_xy(eqn_Te30, [0 -10]);
 [ids_MTPA_40Nm, iqs_MTPA_40Nm, dist_4] = my_Lagrange_multiplier(eDiff(eqn_Te40), ids, iqs);
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fig = figure;
 h_ax = axes(fig);
@@ -42,15 +48,21 @@ plot([0 0], [-Is_Rated Is_Rated] *1.5, 'k', 'LineWidth', 0.5);
 plot([-Is_Rated Is_Rated]*1.5, [0 0], 'k', 'LineWidth', 0.2);
 
 
+% MTPA trajectory plot
+plot(MTPA.Idsr,MTPA.Iqsr, 'k--', 'linewidth',1.5);
+title('MTPA Curve')
+xlabel('i_{ds}^r [A]')
+ylabel('i_{qs}^r [A]')
+
 % 전류제한원
 f1te=fimplicit(eqn_Te10, 'color', [0.5 0.5 0.5]);
 f2te=fimplicit(eqn_Te20, 'color', [0.5 0.5 0.5]);
 f3te=fimplicit(eqn_Te30, 'color', [0.5 0.5 0.5]);
 f4te=fimplicit(eqn_Te40, 'color', [0.5 0.5 0.5]);
 
-f2di=fimplicit(ids^2+iqs^2==dist_2^2, 'color',[0.3 0.3 0.3]);
-f3di=fimplicit(ids^2+iqs^2==dist_3^2, 'color',[0.3 0.3 0.3]);
-f4di=fimplicit(ids^2+iqs^2==Is_Rated^2, color='k', linewidth=1.2, displayname='Current Constraint');
+fimplicit(ids^2+iqs^2==dist_2^2, 'color',[0.3 0.3 0.3]);
+fimplicit(ids^2+iqs^2==dist_3^2, 'color',[0.3 0.3 0.3]);
+fimplicit(ids^2+iqs^2==Is_Rated^2, color='k', linewidth=1.2, displayname='Current Constraint');
 
 drawnow;
 text(f1te.XData(end-3), f1te.YData(end-3),'Te=10Nm', 'backgroundColor', 'white', fontsize=12);
@@ -66,7 +78,7 @@ text(-Lamf/Lds, -0.7, '$$(-\frac{\phi_f}{L_{ds}}, 0)$$', 'interpreter', 'latex')
 
 p_current = plot(0, 0, 'mo', 'MarkerFaceColor', 'm', 'displayname', 'Operating Point');
 
-f1= fimplicit(subs(w_eqn, w, 530), 'k--'); % 20은  수정해야 함.
+f1= fimplicit(subs(w_eqn, w, 530), 'k--');
 
 
 

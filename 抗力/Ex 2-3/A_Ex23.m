@@ -18,7 +18,6 @@ sim('Sim_Ex23.slx')
 syms w ids iqs
 for i = 2400:length(Wr) 
     value = Wr(i); % Wr가 작아서 전압제한타원이 안보임
-    aa = subs(w_eqn, w, value);
     f1.Function = subs(w_eqn, w, value);
     p_current.XData = Idqsr(i,1); p_current.YData = Idqsr(i,2);
     
@@ -58,3 +57,4 @@ for ii=5:length(time_Vdqss_Ref)-1
     prv = cur;
     pause(0.1);
 end
+
